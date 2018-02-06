@@ -42,7 +42,7 @@ void nmi_handler(void)
 		for (;;) {} // loop forever
 	}
 }
-
+extern void usart_setup(void);
 void setup(void)
 {
 	// set SCB_CCR STKALIGN bit to make sure 8-byte stack alignment on exception entry is in effect.
@@ -61,7 +61,7 @@ void setup(void)
 	rcc_periph_clock_enable(RCC_GPIOA);
 	rcc_periph_clock_enable(RCC_GPIOB);
 	rcc_periph_clock_enable(RCC_GPIOC);
-
+	
 	// enable SPI clock
 	rcc_periph_clock_enable(RCC_SPI1);
 
@@ -79,7 +79,7 @@ void setup(void)
 	RCC_CR |= RCC_CR_CSSON;
 
 	// set GPIO for buttons
-	gpio_mode_setup(GPIOC, GPIO_MODE_INPUT, GPIO_PUPD_PULLUP, GPIO2 | GPIO5);
+	gpio_mode_setup(GPIOC, GPIO_MODE_INPUT, GPIO_PUPD_PULLUP, GPIO12 | GPIO10);
 
 	// set GPIO for OLED display
 	gpio_mode_setup(GPIOA, GPIO_MODE_OUTPUT, GPIO_PUPD_NONE, GPIO4);
@@ -100,6 +100,9 @@ void setup(void)
 	// enable OTG_FS
 	gpio_mode_setup(GPIOA, GPIO_MODE_AF, GPIO_PUPD_NONE, GPIO11 | GPIO12);
 	gpio_set_af(GPIOA, GPIO_AF10, GPIO11 | GPIO12);
+
+
+
 }
 
 void setupApp(void)

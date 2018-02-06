@@ -35,4 +35,7 @@
 #define DEBUG_LOG 0
 #endif
 
+#define BTC_balance 0
+#define LTC_balance  1
+
 #endif

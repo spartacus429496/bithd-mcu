@@ -39,11 +39,14 @@ void buttonUpdate(void);
 #endif
 
 #ifndef BTN_PIN_YES
-#define BTN_PIN_YES	GPIO2
+#define BTN_PIN_YES	GPIO10
 #endif
 
 #ifndef BTN_PIN_NO
-#define BTN_PIN_NO	GPIO5
+#define BTN_PIN_NO	GPIO12
 #endif
+
+#define BitBTN_PORT GPIOA
+#define BitBTN_PIN_YES GPIO2
 
 #endif

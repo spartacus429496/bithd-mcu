@@ -28,6 +28,6 @@ extern volatile uint32_t system_millis;
 /* Screen timeout */
 extern uint32_t system_millis_lock_start;
 
-void timer_init(void);
+// void timer_init(void);
 
 #endif

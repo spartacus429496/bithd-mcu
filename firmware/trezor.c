@@ -32,65 +32,23 @@
 #include "gettext.h"
 #include "fastflash.h"
 
-void check_lock_screen(void)
-{
-	buttonUpdate();
 
-	// wake from screensaver on any button
-	if (layoutLast == layoutScreensaver && (button.NoUp || button.YesUp)) {
-		layoutHome();
-		return;
-	}
+#include <libopencm3/stm32/usart.h>
+#include <timerbitpie.h>
+#include "../uart.h"
+#include <libopencm3/stm32/gpio.h>
+#include "./bithdapp.h"
 
-	// button held for long enough (2 seconds)
-	if (layoutLast == layoutHome && button.NoDown >= 285000 * 2) {
 
-		layoutDialog(&bmp_icon_question, _("Cancel"), _("Lock Device"), NULL, _("Do you really want to"), _("lock your TREZOR?"), NULL, NULL, NULL, NULL);
-
-		// wait until NoButton is released
-		usbTiny(1);
-		do {
-			usbSleep(5);
-			buttonUpdate();
-		} while (!button.NoUp);
-
-		// wait for confirmation/cancellation of the dialog
-		do {
-			usbSleep(5);
-			buttonUpdate();
-		} while (!button.YesUp && !button.NoUp);
-		usbTiny(0);
-
-		if (button.YesUp) {
-			// lock the screen
-			session_clear(true);
-			layoutScreensaver();
-		} else {
-			// resume homescreen
-			layoutHome();
-		}
-	}
-
-	// if homescreen is shown for longer than 10 minutes, lock too
-	if (layoutLast == layoutHome) {
-		if ((system_millis - system_millis_lock_start) >= 600000) {
-			// lock the screen
-			session_clear(true);
-			layoutScreensaver();
-		}
-	}
-}
 
 int main(void)
 {
-#ifndef APPVER
+
 	setup();
 	__stack_chk_guard = random32(); // this supports compiler provided unpredictable stack protection checks
 	oledInit();
-#else
-	setupApp();
-	__stack_chk_guard = random32(); // this supports compiler provided unpredictable stack protection checks
-#endif
+	usart_setup();                  //uart init 115200
+
 
 #if FASTFLASH
 	uint16_t state = gpio_port_read(BTN_PORT);
@@ -103,21 +61,18 @@ int main(void)
 
 #if DEBUG_LINK
 	oledSetDebugLink(1);
-	storage_reset(); // wipe storage if debug link
+	storage_reset();                // wipe storage if debug link
 	storage_reset_uuid();
 	storage_commit();
-	storage_clearPinArea(); // reset PIN failures if debug link
+	storage_clearPinArea();         // reset PIN failures if debug link
 #endif
 
-	oledDrawBitmap(40, 0, &bmp_logo64);
-	oledRefresh();
 
 	storage_init();
-	layoutHome();
-	usbInit();
+
 	for (;;) {
 		usbPoll();
-		check_lock_screen();
+	  bithdapp();
 	}
 
 	return 0;

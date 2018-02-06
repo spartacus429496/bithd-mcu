@@ -19,7 +19,7 @@
 
 #include <libopencm3/usb/usbd.h>
 #include <libopencm3/usb/hid.h>
-
+#include <libopencm3/stm32/gpio.h>
 #include "trezor.h"
 #include "usb.h"
 #include "debug.h"
@@ -140,7 +140,7 @@ static const uint8_t hid_report_descriptor_u2f[] = {
 	0x91, 0x02,        // OUTPUT (Data,Var,Abs)
 	0xc0               // END_COLLECTION
 };
-
+unsigned char loopuart=0;
 static const struct {
 	struct usb_hid_descriptor hid_descriptor;
 	struct {
@@ -363,6 +363,27 @@ static void hid_u2f_rx_callback(usbd_device *dev, uint8_t ep)
 	u2fhid_read(tiny, (const U2FHID_FRAME *) (void*) buf);
 }
 
+
+void ManyBlock64bytes_callback(unsigned char* buf,unsigned short length)
+{
+  unsigned short i,j;
+  j=length/64;
+  for(i=0;i<j;i++)
+    {
+      _rx_callback(&buf[i*64]);
+    }
+}
+
+void _rx_callback(unsigned char* buf)
+{
+	if (!tiny) {
+		msg_read(buf, 64);
+	} else {
+		msg_read_tiny(buf, 64);
+	}
+}
+
+
 #if DEBUG_LINK
 static void hid_debug_rx_callback(usbd_device *dev, uint8_t ep)
 {
@@ -406,28 +427,80 @@ void usbInit(void)
 	usbd_dev = usbd_init(&otgfs_usb_driver, &dev_descr, &config, usb_strings, sizeof(usb_strings) / sizeof(*usb_strings), usbd_control_buffer, sizeof(usbd_control_buffer));
 	usbd_register_set_config_callback(usbd_dev, hid_set_config);
 }
+extern volatile unsigned char wangflag;
+extern unsigned char sendsuccessflag;
+extern unsigned char uart_send_flag;                    //串口数据发送标志位 0 无数据发送，1 有数据发送
+extern unsigned char Data_64Bytes[66];
+void CmdSendUart(unsigned char cmd_uart,unsigned char* apdubuf,unsigned short apdulength);
+void uartpoll(void)
+{
+	static uint8_t *data;
+
+
+
+	// write pending data
+	if(sendsuccessflag==0)
+	  {
+        if((wangflag==0xaf)||(wangflag==0xce))
+		{
+	       wangflag=0;
+        }
+		data = msg_out_data();
+		if (data) {
+			memcpy(Data_64Bytes,data,64);
+			CmdSendUart(1,Data_64Bytes,64);
+		}
+	  }
+	if(sendsuccessflag==3)
+	  {
+		  if((wangflag==0xaf)||(wangflag==0xce))
+			{
+				data = msg_out_data();
+				if (data) {
+	
+						memcpy(Data_64Bytes,data,64);
+						CmdSendUart(1,Data_64Bytes,64);
+				
+				}
+			}
+		  else
+		  {
+	   do{ data = msg_out_data();}
+	   while(data!=0);
+		  }
+
+	   sendsuccessflag=0;
+	  }
+}
+
+
+
+void UartDataSendrecive(void);
 
 void usbPoll(void)
 {
-	static const uint8_t *data;
-	// poll read buffer
-	usbd_poll(usbd_dev);
-	// write pending data
-	data = msg_out_data();
-	if (data) {
-		while ( usbd_ep_write_packet(usbd_dev, ENDPOINT_ADDRESS_IN, data, 64) != 64 ) {}
-	}
-	data = u2f_out_data();
-	if (data) {
-		while ( usbd_ep_write_packet(usbd_dev, ENDPOINT_ADDRESS_U2F_IN, data, 64) != 64 ) {}
-	}
-#if DEBUG_LINK
-	// write pending debug data
-	data = msg_debug_out_data();
-	if (data) {
-		while ( usbd_ep_write_packet(usbd_dev, ENDPOINT_ADDRESS_DEBUG_IN, data, 64) != 64 ) {}
-	}
-#endif
+// 	static const uint8_t *data;
+// 	// poll read buffer
+// 	usbd_poll(usbd_dev);
+// 	// write pending data
+// 	data = msg_out_data();
+// 	if (data) {
+// 		while ( usbd_ep_write_packet(usbd_dev, ENDPOINT_ADDRESS_IN, data, 64) != 64 ) {}
+// 	}
+// 	data = u2f_out_data();
+// 	if (data) {
+// 		while ( usbd_ep_write_packet(usbd_dev, ENDPOINT_ADDRESS_U2F_IN, data, 64) != 64 ) {}
+// 	}
+// #if DEBUG_LINK
+// 	// write pending debug data
+// 	data = msg_debug_out_data();
+// 	if (data) {
+// 		while ( usbd_ep_write_packet(usbd_dev, ENDPOINT_ADDRESS_DEBUG_IN, data, 64) != 64 ) {}
+// 	}
+// #endif
+
+	uartpoll();
+	UartDataSendrecive();
 }
 
 void usbReconnect(void)
@@ -447,8 +520,9 @@ char usbTiny(char set)
 void usbSleep(uint32_t millis)
 {
 	uint32_t start = system_millis;
+	uint32_t MillTime=millis;
 
-	while ((system_millis - start) < millis) {
-		usbd_poll(usbd_dev);
+	while ((system_millis - start) < MillTime) {
+		// usbd_poll(usbd_dev);
 	}
 }

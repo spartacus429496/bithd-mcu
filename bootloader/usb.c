@@ -36,6 +36,12 @@
 #include "ecdsa.h"
 #include "secp256k1.h"
 
+#include "../timerbitpie.h"
+#include "uart.h"
+
+extern void SuccessAck(void);
+extern unsigned char needsuccessack_flag;
+
 #define ENDPOINT_ADDRESS_IN         (0x81)
 #define ENDPOINT_ADDRESS_OUT        (0x01)
 
@@ -145,28 +151,28 @@ static const struct usb_config_descriptor config = {
 	.interface = ifaces,
 };
 
-static const char *usb_strings[] = {
-	"SatoshiLabs",
-	"TREZOR",
-	"", // empty serial
-};
+// static const char *usb_strings[] = {
+// 	"SatoshiLabs",
+// 	"TREZOR",
+// 	"", // empty serial
+// };
 
-static int hid_control_request(usbd_device *dev, struct usb_setup_data *req, uint8_t **buf, uint16_t *len, usbd_control_complete_callback *complete)
-{
-	(void)complete;
-	(void)dev;
+// static int hid_control_request(usbd_device *dev, struct usb_setup_data *req, uint8_t **buf, uint16_t *len, usbd_control_complete_callback *complete)
+// {
+// 	(void)complete;
+// 	(void)dev;
 
-	if ((req->bmRequestType != 0x81) ||
-	    (req->bRequest != USB_REQ_GET_DESCRIPTOR) ||
-	    (req->wValue != 0x2200))
-		return 0;
+// 	if ((req->bmRequestType != 0x81) ||
+// 	    (req->bRequest != USB_REQ_GET_DESCRIPTOR) ||
+// 	    (req->wValue != 0x2200))
+// 		return 0;
 
-	/* Handle the HID report descriptor. */
-	*buf = (uint8_t *)hid_report_descriptor;
-	*len = sizeof(hid_report_descriptor);
+// 	/* Handle the HID report descriptor. */
+// 	*buf = (uint8_t *)hid_report_descriptor;
+// 	*len = sizeof(hid_report_descriptor);
 
-	return 1;
-}
+// 	return 1;
+// }
 
 enum {
 	STATE_READY,
@@ -177,6 +183,8 @@ enum {
 	STATE_END,
 };
 
+
+extern unsigned char Data_64Bytes[UartDataMax];
 static uint32_t flash_pos = 0, flash_len = 0;
 static char flash_state = STATE_READY;
 static uint8_t flash_anim = 0;
@@ -185,40 +193,41 @@ static uint32_t msg_size = 0;
 
 static uint8_t meta_backup[FLASH_META_LEN];
 
-static void send_msg_success(usbd_device *dev)
+static void send_msg_success(void)
 {
-	// response: Success message (id 2), payload len 0
-	while ( usbd_ep_write_packet(dev, ENDPOINT_ADDRESS_IN,
-		// header
-		"?##"
-		// msg_id
-		"\x00\x02"
-		// msg_size
-		"\x00\x00\x00\x00"
-		// padding
-		"\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00"
-		, 64) != 64) {}
+	
+  unsigned char data_64Bytes[]={'?','#','#',0x00,0x02,
+							  0x00,0x00,0x00,0x00,
+							  0x00,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0x00,
+							  0x00,0x00,0x00,0,0x00,0,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,
+							  0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,
+							  0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00};
+  memcpy(Data_64Bytes,data_64Bytes,sizeof(data_64Bytes));
+  CmdSendUart(1,Data_64Bytes,64);
 }
 
-static void send_msg_failure(usbd_device *dev)
+
+static void send_msg_failure(void)
 {
-	// response: Failure message (id 3), payload len 2
-	//           - code = 99 (Failure_FirmwareError)
-	while ( usbd_ep_write_packet(dev, ENDPOINT_ADDRESS_IN,
-		// header
-		"?##"
-		// msg_id
-		"\x00\x03"
-		// msg_size
-		"\x00\x00\x00\x02"
-		// data
-		"\x08" "\x63"
-		// padding
-		"\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00"
-		, 64) != 64) {}
+	// send response: Failure message (id 3), payload len 2
+		// code = 99 (Failure_FirmwareError)
+
+	  unsigned char data_64Bytes[]={'?','#','#',
+	                              0x00,0x03,
+								  0x00,0x00,0x00,0x02,
+								  0x08,0x63,
+								  0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0x00,
+								  0x00,0x00,0x00,0,0x00,0,0x00,
+								  0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,
+								  0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,
+								  0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00
+	                                                          };
+	  memcpy(Data_64Bytes,data_64Bytes,sizeof(data_64Bytes));
+		CmdSendUart(1,Data_64Bytes,64);
+
 }
 
-static void send_msg_features(usbd_device *dev)
+static void send_msg_features(void)
 {
 	// response: Features message (id 17), payload len 30
 	//           - vendor = "bitcointrezor.com"
@@ -227,61 +236,47 @@ static void send_msg_features(usbd_device *dev)
 	//           - patch_version = VERSION_PATCH
 	//           - bootloader_mode = True
 	//           - firmware_present = True/False
-	if (brand_new_firmware) {
-		while ( usbd_ep_write_packet(dev, ENDPOINT_ADDRESS_IN,
-			// header
-			"?##"
-			// msg_id
-			"\x00\x11"
-			// msg_size
-			"\x00\x00\x00\x1e"
-			// data
-			"\x0a" "\x11" "bitcointrezor.com"
-			"\x10" VERSION_MAJOR_CHAR
-			"\x18" VERSION_MINOR_CHAR
-			"\x20" VERSION_PATCH_CHAR
-			"\x28" "\x01"
-			"\x90\x01" "\x00"
-			// padding
-			"\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00"
-			, 64) != 64) {}
-	} else {
-		while ( usbd_ep_write_packet(dev, ENDPOINT_ADDRESS_IN,
-			// header
-			"?##"
-			// msg_id
-			"\x00\x11"
-			// msg_size
-			"\x00\x00\x00\x1e"
-			// data
-			"\x0a\x11" "bitcointrezor.com"
-			"\x10" VERSION_MAJOR_CHAR
-			"\x18" VERSION_MINOR_CHAR
-			"\x20" VERSION_PATCH_CHAR
-			"\x28" "\x01"
-			"\x90\x01" "\x01"
-			// padding
-			"\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00"
-			, 64) != 64) {}
-	}
+
+
+	  unsigned char data_64Bytes[]={'?','#','#',
+                              0x00,0x11,
+							  0x00,0x00,0x00,0x1e,
+							  0x0a,0x11,
+							  'b','i','t','c','o','i','n','t','r','e','z','o','r','.','c','o','m',0x10,
+							  0x01,0x18,0x03,0x20,0x03,0x28,0x01,
+							  0x90,0x01,0x01,
+							  0x00,0x00,0x00,0x00,0x00,0x00,
+							  0x00,0x00,0x00,0x00,0x00,0x00,
+							  0x00,0x00,0x00,0x00,0x00,0x00,
+							  0x00,0x00,0x00,0x00,0x00,0x00,0x00
+                                                          };
+
+		
+		if (brand_new_firmware) 
+		{
+			data_64Bytes[38]=0x00;
+		}
+
+  memcpy(Data_64Bytes,data_64Bytes,sizeof(data_64Bytes));
+  CmdSendUart(1,Data_64Bytes,64);
 }
 
-static void send_msg_buttonrequest_firmwarecheck(usbd_device *dev)
+static void send_msg_buttonrequest_firmwarecheck(void)
 {
-	// response: ButtonRequest message (id 26), payload len 2
-	//           - code = ButtonRequest_FirmwareCheck (9)
-	while ( usbd_ep_write_packet(dev, ENDPOINT_ADDRESS_IN,
-		// header
-		"?##"
-		// msg_id
-		"\x00\x1a"
-		// msg_size
-		"\x00\x00\x00\x02"
-		// data
-		"\x08" "\x09"
-		// padding
-		"\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00"
-		, 64) != 64) {}
+	// send response: ButtonRequest message (id 26), payload len 2
+		// code = ButtonRequest_FirmwareCheck (9)
+	  unsigned char data_64Bytes[]={'?','#','#',
+	                                                          0x00,0x1a,
+								  0x00,0x00,0x00,0x02,
+								  0x08,0x09,
+								  0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0x00,
+								  0x00,0x00,0x00,0,0x00,0,0x00,
+								  0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,
+								  0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,
+								  0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00
+	                                                          };
+	  memcpy(Data_64Bytes,data_64Bytes,sizeof(data_64Bytes));
+		CmdSendUart(1,Data_64Bytes,64);
 }
 
 static void erase_metadata_sectors(void)
@@ -308,14 +303,24 @@ static void restore_metadata(const uint8_t *backup)
 	flash_lock();
 }
 
-static void hid_rx_callback(usbd_device *dev, uint8_t ep)
+void Datas_rx_callback(unsigned char *buf,unsigned short length)
 {
-	(void)ep;
-	static uint8_t buf[64] __attribute__((aligned(4)));
+  unsigned short j,i=0;
+
+  j=length/64;
+  for(i=0;i<j;i++)
+    {
+      _rx_callback(&buf[i*64]);
+    }
+
+}
+
+void _rx_callback(unsigned char* buf)
+{
+
 	static uint8_t towrite[4] __attribute__((aligned(4)));
 	static int wi;
 
-	if ( usbd_ep_read_packet(dev, ENDPOINT_ADDRESS_OUT, buf, 64) != 64) return;
 
 	if (flash_state == STATE_END) {
 		return;
@@ -332,12 +337,12 @@ static void hid_rx_callback(usbd_device *dev, uint8_t ep)
 
 	if (flash_state == STATE_READY || flash_state == STATE_OPEN) {
 		if (msg_id == 0x0000) {		// Initialize message (id 0)
-			send_msg_features(dev);
+			send_msg_features();
 			flash_state = STATE_OPEN;
 			return;
 		}
 		if (msg_id == 0x0001) {		// Ping message (id 1)
-			send_msg_success(dev);
+			send_msg_success();
 			return;
 		}
 		if (msg_id == 0x0020) {		// SelfTest message (id 32)
@@ -405,9 +410,9 @@ static void hid_rx_callback(usbd_device *dev, uint8_t ep)
 			bool status_all = status_usb && status_rng && status_cpu && status_flash;
 
 			if (status_all) {
-				send_msg_success(dev);
+				send_msg_success();
 			} else {
-				send_msg_failure(dev);
+				send_msg_failure();
 			}
 			layoutDialog(status_all ? &bmp_icon_info : &bmp_icon_error,
 				NULL, NULL, NULL,
@@ -426,6 +431,7 @@ static void hid_rx_callback(usbd_device *dev, uint8_t ep)
 		if (msg_id == 0x0006) {		// FirmwareErase message (id 6)
 			if (!brand_new_firmware) {
 				layoutDialog(&bmp_icon_question, "Abort", "Continue", NULL, "Install new", "firmware?", NULL, "Never do this without", "your recovery card!", NULL);
+				SuccessAck();
 				do {
 					delay(100000);
 					buttonUpdate();
@@ -447,13 +453,13 @@ static void hid_rx_callback(usbd_device *dev, uint8_t ep)
 				}
 				layoutProgress("INSTALLING ... Please wait", 0);
 				flash_lock();
-				send_msg_success(dev);
+				send_msg_success();
 				flash_state = STATE_FLASHSTART;
 				return;
 			}
-			send_msg_failure(dev);
+			send_msg_failure();
 			flash_state = STATE_END;
-			layoutDialog(&bmp_icon_warning, NULL, NULL, NULL, "Firmware installation", "aborted.", NULL, "You may now", "unplug your TREZOR.", NULL);
+			layoutDialog(&bmp_icon_warning, NULL, NULL, NULL, "Firmware installation", "aborted.", NULL, "You may now", "Close your BITHD.", NULL);
 			return;
 		}
 		return;
@@ -462,18 +468,18 @@ static void hid_rx_callback(usbd_device *dev, uint8_t ep)
 	if (flash_state == STATE_FLASHSTART) {
 		if (msg_id == 0x0007) {		// FirmwareUpload message (id 7)
 			if (buf[9] != 0x0a) { // invalid contents
-				send_msg_failure(dev);
+				send_msg_failure();
 				flash_state = STATE_END;
-				layoutDialog(&bmp_icon_error, NULL, NULL, NULL, "Error installing ", "firmware.", NULL, "Unplug your TREZOR", "and try again.", NULL);
+				layoutDialog(&bmp_icon_error, NULL, NULL, NULL, "Error installing ", "firmware.", NULL, "Close your BITHD", "and try again.", NULL);
 				return;
 			}
 			// read payload length
 			uint8_t *p = buf + 10;
 			flash_len = readprotobufint(&p);
 			if (flash_len > FLASH_TOTAL_SIZE + FLASH_META_DESC_LEN - (FLASH_APP_START - FLASH_ORIGIN)) { // firmware is too big
-				send_msg_failure(dev);
+				send_msg_failure();
 				flash_state = STATE_END;
-				layoutDialog(&bmp_icon_error, NULL, NULL, NULL, "Firmware is too big.", NULL, "Get official firmware", "from trezor.io/start", NULL, NULL);
+				layoutDialog(&bmp_icon_error, NULL, NULL, NULL, "Firmware is too big.", NULL, "Get official firmware", "from bithd.com/start", NULL, NULL);
 				return;
 			}
 			flash_state = STATE_FLASHING;
@@ -499,9 +505,9 @@ static void hid_rx_callback(usbd_device *dev, uint8_t ep)
 
 	if (flash_state == STATE_FLASHING) {
 		if (buf[0] != '?') {	// invalid contents
-			send_msg_failure(dev);
+			send_msg_failure();
 			flash_state = STATE_END;
-			layoutDialog(&bmp_icon_error, NULL, NULL, NULL, "Error installing ", "firmware.", NULL, "Unplug your TREZOR", "and try again.", NULL);
+			layoutDialog(&bmp_icon_error, NULL, NULL, NULL, "Error installing ", "firmware.", NULL, "Close your BITHD", "and try again.", NULL);
 			return;
 		}
 		const uint8_t *p = buf + 1;
@@ -530,7 +536,7 @@ static void hid_rx_callback(usbd_device *dev, uint8_t ep)
 		if (flash_pos == flash_len) {
 			flash_state = STATE_CHECK;
 			if (!brand_new_firmware) {
-				send_msg_buttonrequest_firmwarecheck(dev);
+				send_msg_buttonrequest_firmwarecheck();
 				return;
 			}
 		} else {
@@ -547,6 +553,7 @@ static void hid_rx_callback(usbd_device *dev, uint8_t ep)
 			uint8_t hash[32];
 			sha256_Raw((unsigned char *)FLASH_APP_START, flash_len - FLASH_META_DESC_LEN, hash);
 			layoutFirmwareHash(hash);
+			SuccessAck();
 			do {
 				delay(100000);
 				buttonUpdate();
@@ -584,34 +591,34 @@ static void hid_rx_callback(usbd_device *dev, uint8_t ep)
 		}
 		flash_state = STATE_END;
 		if (hash_check_ok) {
-			layoutDialog(&bmp_icon_ok, NULL, NULL, NULL, "New firmware", "successfully installed.", NULL, "You may now", "unplug your TREZOR.", NULL);
-			send_msg_success(dev);
+			layoutDialog(&bmp_icon_ok, NULL, NULL, NULL, "New firmware", "successfully installed.", NULL, "You may now", "Close your BITHD.", NULL);
+			send_msg_success();
 		} else {
 			layoutDialog(&bmp_icon_warning, NULL, NULL, NULL, "Firmware installation", "aborted.", NULL, "You need to repeat", "the procedure with", "the correct firmware.");
-			send_msg_failure(dev);
+			send_msg_failure();
 		}
 		return;
 	}
 
 }
 
-static void hid_set_config(usbd_device *dev, uint16_t wValue)
-{
-	(void)wValue;
+// static void hid_set_config(usbd_device *dev, uint16_t wValue)
+// {
+// 	(void)wValue;
 
-	usbd_ep_setup(dev, ENDPOINT_ADDRESS_IN, USB_ENDPOINT_ATTR_INTERRUPT, 64, 0);
-	usbd_ep_setup(dev, ENDPOINT_ADDRESS_OUT, USB_ENDPOINT_ATTR_INTERRUPT, 64, hid_rx_callback);
+// 	usbd_ep_setup(dev, ENDPOINT_ADDRESS_IN, USB_ENDPOINT_ATTR_INTERRUPT, 64, 0);
+// 	usbd_ep_setup(dev, ENDPOINT_ADDRESS_OUT, USB_ENDPOINT_ATTR_INTERRUPT, 64, hid_rx_callback);
 
-	usbd_register_control_callback(
-		dev,
-		USB_REQ_TYPE_STANDARD | USB_REQ_TYPE_INTERFACE,
-		USB_REQ_TYPE_TYPE | USB_REQ_TYPE_RECIPIENT,
-		hid_control_request
-	);
-}
+// 	usbd_register_control_callback(
+// 		dev,
+// 		USB_REQ_TYPE_STANDARD | USB_REQ_TYPE_INTERFACE,
+// 		USB_REQ_TYPE_TYPE | USB_REQ_TYPE_RECIPIENT,
+// 		hid_control_request
+// 	);
+// }
 
-static usbd_device *usbd_dev;
-static uint8_t usbd_control_buffer[128];
+// static usbd_device *usbd_dev;
+// static uint8_t usbd_control_buffer[128];
 
 void checkButtons(void)
 {
@@ -645,10 +652,11 @@ void checkButtons(void)
 void usbLoop(bool firmware_present)
 {
 	brand_new_firmware = !firmware_present;
-	usbd_dev = usbd_init(&otgfs_usb_driver, &dev_descr, &config, usb_strings, 3, usbd_control_buffer, sizeof(usbd_control_buffer));
-	usbd_register_set_config_callback(usbd_dev, hid_set_config);
+	// usbd_dev = usbd_init(&otgfs_usb_driver, &dev_descr, &config, usb_strings, 3, usbd_control_buffer, sizeof(usbd_control_buffer));
+	// usbd_register_set_config_callback(usbd_dev, hid_set_config);
 	for (;;) {
-		usbd_poll(usbd_dev);
+		// usbd_poll(usbd_dev);
+		UartDataSendrecive();
 		if (brand_new_firmware && (flash_state == STATE_READY || flash_state == STATE_OPEN)) {
 			checkButtons();
 		}

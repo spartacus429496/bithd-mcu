@@ -33,7 +33,8 @@
 #define MAX_WRONG_PINS 15
 
 bool protectAbortedByInitialize = false;
-
+unsigned char protectbuttonflag=0;
+extern unsigned char sendsuccessflag;
 bool protectButton(ButtonRequestType type, bool confirm_only)
 {
 	ButtonRequest resp;
@@ -49,7 +50,8 @@ bool protectButton(ButtonRequestType type, bool confirm_only)
 	usbTiny(1);
 	buttonUpdate(); // Clear button state
 	msg_write(MessageType_MessageType_ButtonRequest, &resp);
-
+	loopuart=1;
+	protectbuttonflag=1;
 	for (;;) {
 		usbPoll();
 
@@ -65,10 +67,18 @@ bool protectButton(ButtonRequestType type, bool confirm_only)
 			buttonUpdate();
 			if (button.YesUp) {
 				result = true;
+				while(sendsuccessflag!=0)
+				{
+					usbPoll();
+				}
 				break;
 			}
 			if (!confirm_only && button.NoUp) {
 				result = false;
+				while(sendsuccessflag!=0)
+				{
+				usbPoll();
+				}
 				break;
 			}
 		}
@@ -104,7 +114,8 @@ bool protectButton(ButtonRequestType type, bool confirm_only)
 	}
 
 	usbTiny(0);
-
+	loopuart=0;
+	protectbuttonflag=0;
 	return result;
 }
 
@@ -117,6 +128,7 @@ const char *requestPin(PinMatrixRequestType type, const char *text)
 	usbTiny(1);
 	msg_write(MessageType_MessageType_PinMatrixRequest, &resp);
 	pinmatrix_start(text);
+	loopuart=1;
 	for (;;) {
 		usbPoll();
 		if (msg_tiny_id == MessageType_MessageType_PinMatrixAck) {
@@ -142,6 +154,7 @@ const char *requestPin(PinMatrixRequestType type, const char *text)
 		}
 #endif
 	}
+		loopuart=0;
 }
 
 static void protectCheckMaxTry(uint32_t wait) {
@@ -243,9 +256,10 @@ bool protectPassphrase(void)
 	usbTiny(1);
 	msg_write(MessageType_MessageType_PassphraseRequest, &resp);
 
-	layoutDialogSwipe(&bmp_icon_info, NULL, NULL, NULL, _("Please enter your"), _("passphrase using"), _("the computer's"), _("keyboard."), NULL, NULL);
+	layoutDialogSwipe(&bmp_icon_info, NULL, NULL, NULL, _("Please enter your"), _("passphrase using"), _("the phone's"), _("keyboard."), NULL, NULL);
 
 	bool result;
+	loopuart=1;
 	for (;;) {
 		usbPoll();
 		if (msg_tiny_id == MessageType_MessageType_PassphraseAck) {
@@ -264,6 +278,7 @@ bool protectPassphrase(void)
 			break;
 		}
 	}
+	loopuart=0;
 	usbTiny(0);
 	layoutHome();
 	return result;

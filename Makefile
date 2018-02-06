@@ -11,6 +11,9 @@ OBJS += timer.o
 OBJS += gen/bitmaps.o
 OBJS += gen/fonts.o
 
+OBJS += timerbitpie.o
+OBJS += uart.o
+
 libtrezor.a: $(OBJS)
 	$(AR) rcs libtrezor.a $(OBJS)
 

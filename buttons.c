@@ -20,9 +20,45 @@
 #include "buttons.h"
 
 struct buttonState button;
-
+//extern void usbSleep(uint32_t millis);
 void buttonUpdate()
 {
+
+    // uint16_t state;
+
+	// state = gpio_port_read(BTN_PORT);
+
+	// if ((state & BTN_PIN_YES) == 0) 
+	// {	// Yes button is down
+	// 	usbSleep(100);
+	// 	while((state & BTN_PIN_YES) == 0)
+	// 	{
+	// 		state = gpio_port_read(BTN_PORT);  
+	// 	}
+	// 	usbSleep(100);
+	// 	button.YesDown = 0;
+	// 	button.YesUp = true;
+	// }
+	// else
+	// {
+	// 	if ((state & BTN_PIN_NO) == 0) 
+	// 	{	// No button is down
+	// 		usbSleep(100);
+	// 		while((state & BTN_PIN_YES) == 0)
+	// 		{
+	// 			state = gpio_port_read(BTN_PORT);  
+	// 		}
+	// 		usbSleep(100);
+	// 		button.NoDown = 0;
+	// 		button.NoUp = true;
+	// 	}
+	// 	else
+	// 	{
+	// 		button.YesUp = false;
+	// 		button.NoUp = false;
+	// 	}
+
+	// }
 	uint16_t state;
 	static uint16_t last_state = BTN_PIN_YES | BTN_PIN_NO;
 

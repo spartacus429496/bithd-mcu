@@ -98,7 +98,7 @@ void layoutHome(void)
 		layoutSwipe();
 	}
 	layoutLast = layoutHome;
-	const char *label = storage_isInitialized() ? storage_getLabel() : _("Go to trezor.io/start");
+	const char *label = storage_isInitialized() ? storage_getLabel() : _("Go to bithd.com/start");
 	const uint8_t *homescreen = storage_getHomescreen();
 	if (homescreen) {
 		BITMAP b;
@@ -111,7 +111,7 @@ void layoutHome(void)
 			oledDrawBitmap(44, 4, &bmp_logo48);
 			oledDrawStringCenter(OLED_HEIGHT - 8, label);
 		} else {
-			oledDrawBitmap(40, 0, &bmp_logo64);
+			oledDrawBitmap(40, 8, &bmp_logo64);
 		}
 	}
 	if (storage_needsBackup()) {
@@ -836,3 +836,7 @@ void layoutCosiCommitSign(const uint32_t *address_n, size_t address_n_count, con
 	layoutDialogSwipe(&bmp_icon_question, _("Cancel"), _("Confirm"), desc,
 		str[0], str[1], str[2], str[3], NULL, NULL);
 }
+
+
+//FD6F44BD04AD10B3E695CA74763B0C33629A148EB395C9977F94B42483084361263881A36290B9336510F769BF975512B435F53B891942ACA69E7A3AA662B132
+//fd6f44bd04ad10b3e695ca74763b0c33629a148eb395c9977f94b42483084361d9c77e5c9d6f46cc9aef08964068aaec0678e7ab262f5d8f1933e45229d3900f

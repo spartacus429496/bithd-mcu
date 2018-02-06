@@ -108,6 +108,8 @@ void reset_entropy(const uint8_t *ext_entropy, uint32_t len)
 
 static char current_word[10];
 
+
+volatile unsigned char wangflag;
 // separated == true if called as a separate workflow via BackupMessage
 void reset_backup(bool separated)
 {
@@ -122,6 +124,8 @@ void reset_backup(bool separated)
 	if (separated) {
 		storage_commit();
 	}
+	
+	wangflag=0xaf;
 
 	for (int pass = 0; pass < 2; pass++) {
 		int i = 0, word_pos = 1;
@@ -155,6 +159,7 @@ void reset_backup(bool separated)
 		storage_commit();
 		fsm_sendSuccess(_("Device successfully initialized"));
 	}
+    wangflag=0xce;
 	layoutHome();
 }
 

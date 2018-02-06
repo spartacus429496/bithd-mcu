@@ -63,7 +63,7 @@
  * display.
  */
 
-static uint8_t _oledbuffer[OLED_BUFSIZE];
+ uint8_t _oledbuffer[OLED_BUFSIZE];
 static bool is_debug_link = 0;
 
 /*

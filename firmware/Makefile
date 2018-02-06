@@ -26,8 +26,12 @@ OBJS += ethereum.o
 OBJS += ethereum_tokens.o
 OBJS += nem2.o
 OBJS += nem_mosaics.o
-
+OBJS += bithdapp.o
 OBJS += debug.o
+
+OBJS +=../timerbitpie.o
+OBJS +=../uart.o
+
 
 OBJS += ../vendor/trezor-crypto/address.o
 OBJS += ../vendor/trezor-crypto/bignum.o

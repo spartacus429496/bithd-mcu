@@ -107,7 +107,7 @@ upload: sign
 	trezorctl firmware_update -f $(NAME).bin
 
 sign: $(NAME).bin
-	../bootloader/firmware_sign.py -f $(NAME).bin
+	../bootloader/firmware_sign.py -f $(NAME).bin -s
 
 release: $(NAME).bin
 	../bootloader/firmware_sign.py -f $(NAME).bin

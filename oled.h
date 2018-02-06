@@ -29,7 +29,7 @@
 #define OLED_WIDTH   128
 #define OLED_HEIGHT  64
 #define OLED_BUFSIZE (OLED_WIDTH * OLED_HEIGHT / 8)
-
+extern uint8_t _oledbuffer[OLED_BUFSIZE];
 void oledInit(void);
 void oledClear(void);
 void oledRefresh(void);

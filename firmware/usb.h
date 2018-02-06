@@ -19,11 +19,13 @@
 
 #ifndef __USB_H__
 #define __USB_H__
-
+extern unsigned char loopuart;
+extern unsigned char protectbuttonflag;
 void usbInit(void);
 void usbPoll(void);
 void usbReconnect(void);
 char usbTiny(char set);
 void usbSleep(uint32_t millis);
-
+void _rx_callback(unsigned char* buf);
+void ManyBlock64bytes_callback(unsigned char* buf,unsigned short length);
 #endif

@@ -33,6 +33,8 @@
 #include "layout.h"
 #include "serialno.h"
 #include "rng.h"
+#include "../timerbitpie.h"
+#include "./uart.h"
 
 void layoutFirmwareHash(const uint8_t *hash)
 {
@@ -45,7 +47,7 @@ void layoutFirmwareHash(const uint8_t *hash)
 
 void show_halt(void)
 {
-	layoutDialog(&bmp_icon_error, NULL, NULL, NULL, "Unofficial firmware", "aborted.", NULL, "Unplug your TREZOR", "contact our support.", NULL);
+	layoutDialog(&bmp_icon_error, NULL, NULL, NULL, "Unofficial firmware", "aborted.", NULL, "Close your BITHD", "contact our support.", NULL);
 	system_halt();
 }
 
@@ -103,9 +105,9 @@ bool firmware_present(void)
 void bootloader_loop(void)
 {
 	oledClear();
-	oledDrawBitmap(0, 0, &bmp_logo64);
+	oledDrawBitmap(0, 8, &bmp_logo64);
 	if (firmware_present()) {
-		oledDrawString(52, 0, "TREZOR");
+		oledDrawString(52, 0, "BITHD");
 		static char serial[25];
 		fill_serialno_fixed(serial);
 		oledDrawString(52, 20, "Serial No.");
@@ -116,12 +118,19 @@ void bootloader_loop(void)
 	} else {
 		oledDrawString(52, 10, "Welcome!");
 		oledDrawString(52, 30, "Please visit");
-		oledDrawString(52, 50, "trezor.io/start");
+		oledDrawString(52, 50, "Bithd.com/start");
 	}
 	oledRefresh();
 
 	usbLoop(firmware_present());
 }
+
+
+/*********************
+ * Function:clear Sram data,For fix  physical memory access issue
+*****/
+#define RamStartAdress 0x20000000
+#define SizeOfRam          0x1ffff
 
 int main(void)
 {
@@ -130,32 +139,36 @@ int main(void)
 #endif
 	__stack_chk_guard = random32(); // this supports compiler provided unpredictable stack protection checks
 #ifndef APPVER
-	memory_protect();
+//	memory_protect();
 	oledInit();
 #endif
+///////////////////////////////////////////
 
-#ifndef APPVER
-	// at least one button is unpressed
-	uint16_t state = gpio_port_read(BTN_PORT);
-	int unpressed = ((state & BTN_PIN_YES) == BTN_PIN_YES || (state & BTN_PIN_NO) == BTN_PIN_NO);
+	gpio_mode_setup(GPIOA, GPIO_MODE_INPUT, GPIO_PUPD_PULLUP, BitBTN_PIN_YES);
+	gpio_mode_setup(GPIOB, GPIO_MODE_INPUT, GPIO_PUPD_PULLUP, GPIO5);
+    timer_init();
 
-	if (firmware_present() && unpressed) {
+/////////////////////////////////////////////////
+uint16_t state = gpio_port_read(BitBTN_PORT);
+	if ((state & BitBTN_PIN_YES) == BitBTN_PIN_YES)
+	{
 
-		oledClear();
-		oledDrawBitmap(40, 0, &bmp_logo64_empty);
-		oledRefresh();
-
-		uint8_t hash[32];
-		if (!signatures_ok(hash)) {
-			show_unofficial_warning(hash);
+		if (firmware_present()) 
+		{
+			state = gpio_port_read(GPIOB);
+			if ((state & GPIO5) == GPIO5)
+			{
+				uint8_t hash[32];
+					if (!signatures_ok(hash)) 
+					{
+						show_unofficial_warning(hash);
+					}
+			} 
+			load_app();
 		}
 
-		delay(100000);
-
-		load_app();
 	}
-#endif
-
+	usart_setup();    //uart init 115200
 	bootloader_loop();
 
 	return 0;

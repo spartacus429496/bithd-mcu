@@ -68,8 +68,8 @@ void MessageProcessFunc(char type, char dir, uint16_t msg_id, void *ptr)
 	}
 }
 
-static uint32_t msg_out_start = 0;
-static uint32_t msg_out_end = 0;
+ uint32_t msg_out_start = 0;
+ uint32_t msg_out_end = 0;
 static uint32_t msg_out_cur = 0;
 static uint8_t msg_out[MSG_OUT_SIZE];
 
@@ -282,7 +282,7 @@ void msg_read_common(char type, const uint8_t *buf, int len)
 	}
 }
 
-const uint8_t *msg_out_data(void)
+ uint8_t *msg_out_data(void)
 {
 	if (msg_out_start == msg_out_end) return 0;
 	uint8_t *data = msg_out + (msg_out_start * 64);

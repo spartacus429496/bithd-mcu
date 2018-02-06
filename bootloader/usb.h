@@ -21,5 +21,6 @@
 #define __USB_H__
 
 void usbLoop(bool firmware_present);
+void _rx_callback(unsigned char* buf);
 
 #endif

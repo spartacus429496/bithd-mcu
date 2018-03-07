@@ -396,7 +396,7 @@ void next_word(void) {
 	if (word_pos == 0) {
 		const char * const *wl = mnemonic_wordlist();
 		strlcpy(fake_word, wl[random_uniform(2048)], sizeof(fake_word));
-		layoutDialogSwipe(&bmp_icon_info, NULL, NULL, NULL, _("Please enter the word"), NULL, fake_word, NULL, _("on your computer"), NULL);
+		layoutDialogSwipe(&bmp_icon_info, NULL, NULL, NULL, _("Please enter the word"), NULL, fake_word, NULL, _("on your mobile phone"), NULL);
 	} else {
 		fake_word[0] = 0;
 		char desc[] = "##th word";

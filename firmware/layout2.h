@@ -67,5 +67,5 @@ void layoutNEMMosaicDescription(const char *description);
 void layoutNEMLevy(const NEMMosaicDefinition *definition, uint8_t network);
 
 void layoutCosiCommitSign(const uint32_t *address_n, size_t address_n_count, const uint8_t *data, uint32_t len, bool final_sign);
-
+void layoutQR(unsigned char* buf,unsigned char length);
 #endif

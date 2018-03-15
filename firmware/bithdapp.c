@@ -82,19 +82,20 @@ void bluenamedisplay(unsigned char* buf)
     unsigned char buf_No[]="No";
 
     oledClear();
-    display_str_oled(28,0,buf_bluetooth,sizeof(buf_bluetooth)-1);
-    display_str_oled(0,16,buf_name,sizeof(buf_name)-1);
-    xy=(sizeof(buf_name)-1)*8;
+    layoutQR(buf,12);
+    display_str_oled(52,0,buf_bluetooth,sizeof(buf_bluetooth)-1);
+    display_str_oled(58,16,buf_name,sizeof(buf_name)-1);
+    xy=(sizeof(buf_name)-1)*8+58;
     oledDrawBitmap(xy,16, &bitpie1616Asciimaohao);
-    display_str_oled(88,16,buf_bithd,sizeof(buf_bithd)-1);
-    display_str_oled(0,32,buf_No,sizeof(buf_No)-1);
+    display_str_oled(88,32,buf_bithd,sizeof(buf_bithd)-1);
+    display_str_oled(0,48,buf_No,sizeof(buf_No)-1);
     xy=(sizeof(buf_No)-1)*8;
-    oledDrawBitmap(xy,32, &bitpie8_16_dian);
+    oledDrawBitmap(xy,48, &bitpie8_16_dian);
     xy=xy+16;
 
     for(i=0;i<12;i++)
     {
-        oledDrawBitmap(xy,32,BitpieDigits816[(buf[i]&0x0f)]);
+        oledDrawBitmap(xy,48,BitpieDigits816[(buf[i]&0x0f)]);
         xy=xy+8;
     }
 

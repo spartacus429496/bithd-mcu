@@ -429,6 +429,29 @@ static const char *address_n_str(const uint32_t *address_n, size_t address_n_cou
 	return c;
 }
 
+void layoutQR(unsigned char* buf,unsigned char length)
+{
+	static unsigned char bitdata[QR_MAX_BITDATA];
+	int side = qr_encode(QR_LEVEL_L, 0,(const char*)buf,length, bitdata);
+    int offset = 23 - side;
+
+	oledInvert(0, 0, 45, 45);
+			
+	for (int i = 0; i < side; i++) 
+	{
+		for (int j = 0; j< side; j++) 
+		{
+			int a = j * side + i;
+			if (bitdata[a / 8] & (1 << (7 - a % 8))) 
+			{
+				oledBox(offset + i * 2, offset + j * 2,
+						offset + 1 + i * 2, offset + 1 + j * 2, false);
+			}
+		}
+	}	
+}
+
+
 void layoutAddress(const char *address, const char *desc, bool qrcode, bool ignorecase, const uint32_t *address_n, size_t address_n_count)
 {
 	if (layoutLast != layoutAddress) {

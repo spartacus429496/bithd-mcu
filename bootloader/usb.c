@@ -187,7 +187,6 @@ enum {
 extern unsigned char Data_64Bytes[UartDataMax];
 static uint32_t flash_pos = 0, flash_len = 0;
 static char flash_state = STATE_READY;
-static uint8_t flash_anim = 0;
 static uint16_t msg_id = 0xFFFF;
 static uint32_t msg_size = 0;
 
@@ -511,10 +510,7 @@ void _rx_callback(unsigned char* buf)
 			return;
 		}
 		const uint8_t *p = buf + 1;
-		if (flash_anim % 32 == 4) {
-			layoutProgress("INSTALLING ... Please wait", 1000 * flash_pos / flash_len);
-		}
-		flash_anim++;
+		layoutProgress("INSTALLING ... Please wait", 1000 * flash_pos / flash_len);
 		flash_unlock();
 		while (p < buf + 64 && flash_pos < flash_len) {
 			towrite[wi] = *p;

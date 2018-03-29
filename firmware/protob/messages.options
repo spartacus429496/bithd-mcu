@@ -124,6 +124,7 @@ EthereumSignTx.to			max_size:20
 EthereumSignTx.value			max_size:32
 EthereumSignTx.data_initial_chunk	max_size:1024
 EthereumSignTx.TOKENticker      max_size:32
+EthereumSignTx.TOKENsignedfortickerhash max_size:64
 
 EthereumTxRequest.signature_r		max_size:32
 EthereumTxRequest.signature_s		max_size:32

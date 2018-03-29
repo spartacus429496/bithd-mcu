@@ -1,6 +1,7 @@
 #include <string.h>
 #include "ethereum_tokens.h"
 
+/*
 const TokenType tokens[TOKENS_COUNT] = {
 	{ 1, "\xaf\x30\xd2\xa7\xe9\x0d\x7d\xc3\x61\xc8\xc4\x58\x5e\x9b\xb7\xd2\xf6\xf1\x5b\xc7", " 1ST", 18},
 	{ 1, "\xae\xc9\x8a\x70\x88\x10\x41\x48\x78\xc3\xbc\xdf\x46\xaa\xd3\x1d\xed\x4a\x45\x57", " 300", 18},
@@ -128,9 +129,10 @@ const TokenType tokens[TOKENS_COUNT] = {
 	{ 1, "\xe4\x1d\x24\x89\x57\x1d\x32\x21\x89\x24\x6d\xaf\xa5\xeb\xde\x1f\x46\x99\xf4\x98", " ZRX", 18},
 	{61, "\x08\x5f\xb4\xf2\x40\x31\xea\xed\xbc\x2b\x61\x1a\xa5\x28\xf2\x23\x43\xeb\x52\xdb", " BEC", 8},
 };
+*/
+TokenType *UnknownToken = (TokenType *)1;
 
-const TokenType *UnknownToken = (const TokenType *)1;
-
+/*
 const TokenType *tokenByChainAddress(uint8_t chain_id, const uint8_t *address)
 {
 	if (!address) return 0;
@@ -141,3 +143,4 @@ const TokenType *tokenByChainAddress(uint8_t chain_id, const uint8_t *address)
 	}
 	return UnknownToken;
 }
+*/

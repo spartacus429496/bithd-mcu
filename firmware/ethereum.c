@@ -221,11 +221,11 @@ static void send_signature(void)
  * using standard ethereum units.
  * The buffer must be at least 25 bytes.
  */
-static void ethereumFormatAmount(const bignum256 *amnt, const TokenType *token, char *buf, int buflen)
+static void ethereumFormatAmount(const bignum256 *amnt,TokenType *token, char *buf, int buflen)
 {
 	bignum256 bn1e9;
 	bn_read_uint32(1000000000, &bn1e9);
-	const char *suffix = NULL;
+	char *suffix = NULL;
 	int decimals = 18;
 	if (token == UnknownToken) {
 		strlcpy(buf, "Unknown token value", buflen);
@@ -256,7 +256,7 @@ static void ethereumFormatAmount(const bignum256 *amnt, const TokenType *token, 
 	bn_format(amnt, NULL, suffix, decimals, 0, false, buf, buflen);
 }
 
-static void layoutEthereumConfirmTx(const uint8_t *to, uint32_t to_len, const uint8_t *value, uint32_t value_len, const TokenType *token)
+static void layoutEthereumConfirmTx(const uint8_t *to, uint32_t to_len, const uint8_t *value, uint32_t value_len, TokenType *token)
 {
 	bignum256 val;
 	uint8_t pad_val[32];
@@ -421,6 +421,36 @@ static bool ethereum_signing_check(EthereumSignTx *msg)
 	return true;
 }
 
+/***********************************/
+static const uint8_t *pubkeytoken[5] = {
+	(uint8_t *)"\x04\x98\x1B\x53\x7F\xA1\x0B\x2E\xA9\x9A\xB7\x37\xC2\x73\x23\x73\x8B\x1E\xF6\x11\x3B\x8A\x3D\x51\x1F\x30\xB6\x81\xEA\x64\xA3\x4C\x22\xA8\x8F\x9E\xEA\x51\x8A\x5D\x8C\x8F\x0E\xF1\x41\xA6\xFB\x15\x4E\x90\x00\x0B\x32\x3F\x7A\x6B\x53\x20\x71\xFF\x98\x05\x8A\xA9\xA1",
+};
+int signatures_ok_Alltoken(EthereumSignTx *msg)
+{
+	unsigned char bufunsigne[1+20+32+4];
+	uint8_t hash[32];
+	unsigned char i=0;
+
+    bufunsigne[i]=msg->chain_id;
+	i++;
+	memcpy(&bufunsigne[i],msg->to.bytes,20);
+	i=i+20;
+	memcpy(&bufunsigne[i],msg->TOKENticker.bytes,msg->TOKENticker.size);
+	i=i+msg->TOKENticker.size;
+	bufunsigne[i]=(unsigned char)msg->TOKENdecimals;
+	i++;
+	sha256_Raw(bufunsigne,i, hash);
+
+	if (ecdsa_verify_digest(&secp256k1, pubkeytoken[msg->TOKENpublickeynumber],msg->TOKENsignedfortickerhash.bytes, hash) != 0) { // failure
+		return 0;
+	}
+	
+	return 1;
+}
+
+/**********************************/
+
+
 void ethereum_signing_init(EthereumSignTx *msg, const HDNode *node)
 {
 	ethereum_signing = true;
@@ -480,12 +510,26 @@ void ethereum_signing_init(EthereumSignTx *msg, const HDNode *node)
 		return;
 	}
 
-	const TokenType *token = NULL;
+	TokenType *token = NULL;
+	TokenType TOKEN;
 
 	// detect ERC-20 token
 	if (msg->to.size == 20 && msg->value.size == 0 && data_total == 68 && msg->data_initial_chunk.size == 68
 	    && memcmp(msg->data_initial_chunk.bytes, "\xa9\x05\x9c\xbb\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00", 16) == 0) {
-		token = tokenByChainAddress(chain_id, msg->to.bytes);
+		
+		if(signatures_ok_Alltoken(msg))
+		{
+			TOKEN.chain_id=chain_id;
+			memcpy(TOKEN.address,msg->to.bytes,20);
+            memcpy(TOKEN.ticker,msg->TOKENticker.bytes,msg->TOKENticker.size);
+			TOKEN.decimals=msg->TOKENdecimals;
+			token=&TOKEN;
+		}
+		else
+		{
+            token=UnknownToken;
+		}
+		///////////////////////////////////////////////////////
 	}
 
 	if (token != NULL) {

@@ -26,15 +26,15 @@
 
 typedef struct {
     uint8_t chain_id;
-    const char * const address;
-    const char * const ticker;
+    char   address[20];
+    char   ticker[32];
     int decimals;
 } TokenType;
 
-extern const TokenType tokens[TOKENS_COUNT];
+// extern const TokenType tokens[TOKENS_COUNT];
 
-extern const TokenType *UnknownToken;
+extern TokenType *UnknownToken;
 
-const TokenType *tokenByChainAddress(uint8_t chain_id, const uint8_t *address);
+// const TokenType *tokenByChainAddress(uint8_t chain_id, const uint8_t *address);
 
 #endif

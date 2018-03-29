@@ -547,13 +547,28 @@ void _rx_callback(unsigned char* buf)
 				return;
 			}
 			uint8_t hash[32];
-			sha256_Raw((unsigned char *)FLASH_APP_START, flash_len - FLASH_META_DESC_LEN, hash);
-			layoutFirmwareHash(hash);
-			SuccessAck();
-			do {
+			
+			if (!signatures_ok(hash)) 
+			{
+				memset(hash,0,32);
+				sha256_Raw((unsigned char *)FLASH_APP_START, flash_len - FLASH_META_DESC_LEN, hash);			
+				layoutFirmwareHash(hash);
+				SuccessAck();
+				do {
 				delay(100000);
 				buttonUpdate();
-			} while (!button.YesUp && !button.NoUp);
+				} while (!button.YesUp && !button.NoUp);
+			}
+			else
+			{
+				SuccessAck();
+				delay(100000);
+				button.YesDown = 0;
+			    button.YesUp = true;
+
+			}
+
+
 		}
 
 		bool hash_check_ok = brand_new_firmware || button.YesUp;

@@ -22,7 +22,7 @@
 #include <libopencm3/stm32/rcc.h>
 #include <libopencm3/stm32/gpio.h>
 #include <libopencm3/cm3/scb.h>
-
+#include <libopencm3/stm32/flash.h>
 #include "bootloader.h"
 #include "buttons.h"
 #include "setup.h"
@@ -139,7 +139,7 @@ int main(void)
 #endif
 	__stack_chk_guard = random32(); // this supports compiler provided unpredictable stack protection checks
 #ifndef APPVER
-	memory_protect();
+	// memory_protect();
 	oledInit();
 #endif
 ///////////////////////////////////////////
@@ -148,25 +148,29 @@ int main(void)
 	gpio_mode_setup(GPIOB, GPIO_MODE_INPUT, GPIO_PUPD_PULLUP, GPIO5);
     timer_init();
 
+
 /////////////////////////////////////////////////
 uint16_t state = gpio_port_read(BitBTN_PORT);
+	delay(100000);
 	if ((state & BitBTN_PIN_YES) == BitBTN_PIN_YES)
 	{
 
 		if (firmware_present()) 
 		{
-			state = gpio_port_read(GPIOB);
-			if ((state & GPIO5) == GPIO5)
+			if (!signatures_ok(NULL)) 
 			{
-				uint8_t hash[32];
-					if (!signatures_ok(hash)) 
-					{
-						show_unofficial_warning(hash);
-					}
-			} 
-			load_app();
+				layoutDialog(&bmp_icon_warning, NULL, NULL, NULL, "Firmware installation", "aborted.", NULL, "You need to repeat", "the procedure with", "the correct firmware.");
+				flash_unlock();
+				for (int i = FLASH_CODE_SECTOR_FIRST; i <= FLASH_CODE_SECTOR_LAST; i++) {
+					flash_erase_sector(i, FLASH_CR_PROGRAM_X32);
+				}
+				flash_lock();
+			}
+			else
+			{
+                load_app();
+			}	
 		}
-
 	}
 	usart_setup();    //uart init 115200
 	bootloader_loop();

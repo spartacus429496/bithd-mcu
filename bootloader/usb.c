@@ -436,6 +436,8 @@ void _rx_callback(unsigned char* buf)
 					buttonUpdate();
 				} while (!button.YesUp && !button.NoUp);
 			}
+			delay(10000000);
+
 			if (brand_new_firmware || button.YesUp) {
 				// backup metadata
 				backup_metadata(meta_backup);
@@ -445,6 +447,10 @@ void _rx_callback(unsigned char* buf)
 					layoutProgress("ERASING ... Please wait", 1000 * (i - FLASH_META_SECTOR_FIRST) / (FLASH_CODE_SECTOR_LAST - FLASH_META_SECTOR_FIRST));
 					flash_erase_sector(i, FLASH_CR_PROGRAM_X32);
 				}
+				for (int i = 0; i < (FLASH_META_LEN-FLASH_META_DESC_LEN)/ 4; i++) {
+					const uint32_t *w = (const uint32_t *)(meta_backup + i * 4 + FLASH_META_DESC_LEN);
+					flash_program_word(FLASH_META_START + i * 4+ FLASH_META_DESC_LEN, *w);
+					}
 				// erase code area
 				for (int i = FLASH_CODE_SECTOR_FIRST; i <= FLASH_CODE_SECTOR_LAST; i++) {
 					layoutProgress("ERASING ... Please wait", 1000 * (i - FLASH_META_SECTOR_FIRST) / (FLASH_CODE_SECTOR_LAST - FLASH_META_SECTOR_FIRST));
@@ -543,71 +549,70 @@ void _rx_callback(unsigned char* buf)
 	if (flash_state == STATE_CHECK) {
 
 		if (!brand_new_firmware) {
-			if (msg_id != 0x001B) {	// ButtonAck message (id 27)
-				return;
-			}
-			uint8_t hash[32];
-			
-			if (!signatures_ok(hash)) 
-			{
-				memset(hash,0,32);
-				sha256_Raw((unsigned char *)FLASH_APP_START, flash_len - FLASH_META_DESC_LEN, hash);			
-				layoutFirmwareHash(hash);
-				SuccessAck();
-				do {
-				delay(100000);
-				buttonUpdate();
-				} while (!button.YesUp && !button.NoUp);
-			}
-			else
-			{
+				if (msg_id != 0x001B) {	// ButtonAck message (id 27)
+					return;
+				}
 				SuccessAck();
 				delay(100000);
-				button.YesDown = 0;
-			    button.YesUp = true;
+				layoutProgress("INSTALLING ... Please wait", 1000);
+				delay(100000);
+				if (!signatures_ok(NULL)) 
+				{	// erase code area
+				    layoutDialog(&bmp_icon_warning, NULL, NULL, NULL, "Firmware installation", "aborted.", NULL, "You need to repeat", "the procedure with", "the correct firmware.");
+					flash_unlock();
+					for (int i = FLASH_CODE_SECTOR_FIRST; i <= FLASH_CODE_SECTOR_LAST; i++) {
+						flash_erase_sector(i, FLASH_CR_PROGRAM_X32);
+					}
+					flash_lock();
+		        	send_msg_failure();
+				}
+				else
+				{
+					layoutDialog(&bmp_icon_ok, NULL, NULL, NULL, "New firmware", "successfully installed.", NULL, "You may now", "Close your BITHD.", NULL);
+					send_msg_success();
+					memset(meta_backup, 0, sizeof(meta_backup));
+					// button.YesDown = 0;
+					// button.YesUp = true;
+				}
+            }
 
-			}
+		// bool hash_check_ok = brand_new_firmware || button.YesUp;
 
-
-		}
-
-		bool hash_check_ok = brand_new_firmware || button.YesUp;
-
-		layoutProgress("INSTALLING ... Please wait", 1000);
-		uint8_t flags = *((uint8_t *)FLASH_META_FLAGS);
+		
+		// uint8_t flags = *((uint8_t *)FLASH_META_FLAGS);
 		// check if to restore old storage area but only if signatures are ok
-		if ((flags & 0x01) && signatures_ok(NULL)) {
-			// copy new stuff
-			memcpy(meta_backup, (void *)FLASH_META_START, FLASH_META_DESC_LEN);
-			// replace "TRZR" in header with 0000 when hash not confirmed
-			if (!hash_check_ok) {
-				meta_backup[0] = 0;
-				meta_backup[1] = 0;
-				meta_backup[2] = 0;
-				meta_backup[3] = 0;
-			}
-			// erase storage
-			erase_metadata_sectors();
-			// restore metadata from backup
-			restore_metadata(meta_backup);
-			memset(meta_backup, 0, sizeof(meta_backup));
-		} else {
-			// replace "TRZR" in header with 0000 when hash not confirmed
-			if (!hash_check_ok) {
-				// no need to erase, because we are just erasing bits
-				flash_unlock();
-				flash_program_word(FLASH_META_START, 0x00000000);
-				flash_lock();
-			}
-		}
+		// if ((flags & 0x01) && signatures_ok(NULL)) {
+		// 	// copy new stuff
+		// 	memcpy(meta_backup, (void *)FLASH_META_START, FLASH_META_DESC_LEN);
+		// 	// replace "TRZR" in header with 0000 when hash not confirmed
+		// 	if (!hash_check_ok) {
+		// 		meta_backup[0] = 0;
+		// 		meta_backup[1] = 0;
+		// 		meta_backup[2] = 0;
+		// 		meta_backup[3] = 0;
+		// 	}
+		// 	// erase storage
+		// 	erase_metadata_sectors();
+		// 	// restore metadata from backup
+		// 	restore_metadata(meta_backup);
+		// 	memset(meta_backup, 0, sizeof(meta_backup));
+		// } else {
+		// 	// replace "TRZR" in header with 0000 when hash not confirmed
+		// 	if (!hash_check_ok) {
+		// 		// no need to erase, because we are just erasing bits
+		// 		flash_unlock();
+		// 		flash_program_word(FLASH_META_START, 0x00000000);
+		// 		flash_lock();
+		// 	}
+		// }
 		flash_state = STATE_END;
-		if (hash_check_ok) {
-			layoutDialog(&bmp_icon_ok, NULL, NULL, NULL, "New firmware", "successfully installed.", NULL, "You may now", "Close your BITHD.", NULL);
-			send_msg_success();
-		} else {
-			layoutDialog(&bmp_icon_warning, NULL, NULL, NULL, "Firmware installation", "aborted.", NULL, "You need to repeat", "the procedure with", "the correct firmware.");
-			send_msg_failure();
-		}
+		// if (hash_check_ok) {
+		// 	layoutDialog(&bmp_icon_ok, NULL, NULL, NULL, "New firmware", "successfully installed.", NULL, "You may now", "Close your BITHD.", NULL);
+		// 	send_msg_success();
+		// } else {
+		// 	layoutDialog(&bmp_icon_warning, NULL, NULL, NULL, "Firmware installation", "aborted.", NULL, "You need to repeat", "the procedure with", "the correct firmware.");
+		// 	send_msg_failure();
+		// }
 		return;
 	}
 

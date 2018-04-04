@@ -72,22 +72,55 @@ void display_str_oled(unsigned char x,unsigned char y,unsigned char* strp,unsign
 	}
 }
 
+
+#define d_x 4
 void bluenamedisplay(unsigned char* buf)
 {
     unsigned char xy=0;
     unsigned char i;
-    unsigned char buf_bluetooth[]="Bluetooth";
-    unsigned char buf_name[]="Name";
-    unsigned char buf_bithd[]="bithd";
+    unsigned char buf_bluetooth[]="B";
+    unsigned char buf_version[]="v";
+    unsigned char buf_name[]="F";
     unsigned char buf_No[]="No";
 
     oledClear();
     layoutQR(buf,12);
-    display_str_oled(52,0,buf_bluetooth,sizeof(buf_bluetooth)-1);
-    display_str_oled(58,16,buf_name,sizeof(buf_name)-1);
-    xy=(sizeof(buf_name)-1)*8+58;
-    oledDrawBitmap(xy,16, &bitpie1616Asciimaohao);
-    display_str_oled(88,32,buf_bithd,sizeof(buf_bithd)-1);
+
+    display_str_oled(52,d_x,buf_bluetooth,sizeof(buf_bluetooth)-1);
+    xy=(sizeof(buf_bluetooth)-1)*8+52;
+    oledDrawBitmap(xy,d_x, &bitpie1616Asciimaohao);
+    xy=xy+8+8;
+    display_str_oled(xy,d_x,buf_version,sizeof(buf_version)-1);
+    xy=xy+8;
+    oledDrawBitmap(xy,d_x,BitpieDigits715[(buf[0+12]&0x0f)]);
+    xy=xy+8;
+    oledDrawBitmap(xy,d_x, &bitpie7_15_digitdi);
+    xy=xy+8;
+    oledDrawBitmap(xy,d_x,BitpieDigits715[(buf[1+12]&0x0f)]);
+    xy=xy+8;
+    oledDrawBitmap(xy,d_x, &bitpie7_15_digitdi);
+    xy=xy+8;
+    oledDrawBitmap(xy,d_x,BitpieDigits715[(buf[2+12]&0x0f)]);
+
+
+    display_str_oled(52,d_x+16,buf_name,sizeof(buf_name)-1);
+    xy=(sizeof(buf_bluetooth)-1)*8+52;
+    oledDrawBitmap(xy,d_x+16, &bitpie1616Asciimaohao);
+    xy=xy+8+8;
+    display_str_oled(xy,d_x+16,buf_version,sizeof(buf_version)-1);
+    xy=xy+8;
+    oledDrawBitmap(xy,d_x+16,BitpieDigits715[VERSION_MAJOR]);
+    xy=xy+8;
+    oledDrawBitmap(xy,d_x+16, &bitpie7_15_digitdi);
+    xy=xy+8;
+    oledDrawBitmap(xy,d_x+16,BitpieDigits715[VERSION_MINOR]);
+    xy=xy+8;
+    oledDrawBitmap(xy,d_x+16, &bitpie7_15_digitdi);
+    xy=xy+8;
+    oledDrawBitmap(xy,d_x+16,BitpieDigits715[VERSION_PATCH]);
+ 
+
+
     display_str_oled(0,48,buf_No,sizeof(buf_No)-1);
     xy=(sizeof(buf_No)-1)*8;
     oledDrawBitmap(xy,48, &bitpie8_16_dian);
@@ -95,7 +128,7 @@ void bluenamedisplay(unsigned char* buf)
 
     for(i=0;i<12;i++)
     {
-        oledDrawBitmap(xy,48,BitpieDigits816[(buf[i]&0x0f)]);
+        oledDrawBitmap(xy,48,BitpieDigits715[(buf[i]&0x0f)]);
         xy=xy+8;
     }
 

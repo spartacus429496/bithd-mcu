@@ -31,10 +31,10 @@ typedef struct {
     int decimals;
 } TokenType;
 
-// extern const TokenType tokens[TOKENS_COUNT];
+extern const TokenType tokens[TOKENS_COUNT];
 
 extern TokenType *UnknownToken;
 
-// const TokenType *tokenByChainAddress(uint8_t chain_id, const uint8_t *address);
+TokenType *tokenByChainAddress(uint8_t chain_id, const uint8_t *address);
 
 #endif

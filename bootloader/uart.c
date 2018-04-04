@@ -340,11 +340,13 @@ void UartDataSendrecive(void)
 					if(needsuccessack_flag==0)
 					{
 						uart_send_Bty(ack_succs,3);        //串口发送 成功ACK
+						sendsuccessflag=1;
 					}
 				}
 				else
 				{
 					uart_send_Bty(ack_erro,3);             //返回错误ACK
+					sendsuccessflag=1;
 				}
 
 			}

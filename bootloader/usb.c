@@ -678,3 +678,60 @@ void usbLoop(bool firmware_present)
 		}
 	}
 }
+
+//////////////////////////////////////////////////////////////////
+const BITMAP *BitpieASIIC_abc[26]={
+&bitpieAcii_a,&bitpieAcii_b,&bitpieAcii_c,&bitpieAcii_d,&bitpieAcii_e,
+&bitpieAcii_f,&bitpieAcii_g,&bitpieAcii_h,&bitpieAcii_i,&bitpieAcii_j,
+&bitpieAcii_k,&bitpieAcii_l,&bitpieAcii_m,&bitpieAcii_n,&bitpieAcii_o,
+&bitpieAcii_p,&bitpieAcii_q,&bitpieAcii_r,&bitpieAcii_s,&bitpieAcii_t,
+&bitpieAcii_u,&bitpieAcii_v,&bitpieAcii_w,&bitpieAcii_x,&bitpieAcii_y,
+&bitpieAcii_z,
+};
+const BITMAP *BitpieASIIC_ABC[26]={
+&bitpieAcii_A,&bitpieAcii_B,&bitpieAcii_C,&bitpieAcii_D,&bitpieAcii_E,
+&bitpieAcii_F,&bitpieAcii_G,&bitpieAcii_H,&bitpieAcii_I,&bitpieAcii_J,&bitpieAcii_K,
+&bitpieAcii_L,&bitpieAcii_M,&bitpieAcii_N,&bitpieAcii_O,&bitpieAcii_P,&bitpieAcii_Q,
+&bitpieAcii_R,&bitpieAcii_S,&bitpieAcii_T,&bitpieAcii_U,&bitpieAcii_V,&bitpieAcii_W,
+&bitpieAcii_X,&bitpieAcii_Y,&bitpieAcii_Z,
+};
+const BITMAP *BitpieDigits1632[12]={
+&bitpie16_32_digit0, &bitpie16_32_digit1, &bitpie16_32_digit2, &bitpie16_32_digit3, &bitpie16_32_digit4,
+&bitpie16_32_digit5, &bitpie16_32_digit6, &bitpie16_32_digit7, &bitpie16_32_digit8, &bitpie16_32_digit9,
+&bitpie16_32_digit_,&bitpie16_32_digit_no
+};
+
+void display_str_oled(unsigned char x,unsigned char y,unsigned char* strp,unsigned char length)
+{
+	unsigned char i;
+	unsigned char xy=x;
+    for(i=0;i<length;i++)
+	{
+        if(strp[i]>0x5B){oledDrawBitmap(xy,y, BitpieASIIC_abc[(strp[i]-0x61)]);}
+        else{oledDrawBitmap(xy,y, BitpieASIIC_ABC[(strp[i]-0x41)]);}
+        xy=xy+8;
+	}
+}
+
+void blueParingdisplay(unsigned char* buf)
+{
+    unsigned char xy=0;
+    unsigned char i;
+    unsigned char pair[]="Pair";
+    unsigned char password[]="Password";	
+
+    oledClear();
+    display_str_oled(12,0,pair,sizeof(pair)-1); 
+    xy=(sizeof(pair))*8;
+    display_str_oled(12,0,password,sizeof(password)-1); 
+
+    xy=16;
+    for(i=0;i<6;i++)
+    {
+        oledDrawBitmap(xy,24,BitpieDigits1632[(buf[i]&0x0f)]);
+        xy=xy+16;
+    }
+
+	oledRefresh();
+
+}

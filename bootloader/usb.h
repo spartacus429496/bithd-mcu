@@ -22,5 +22,5 @@
 
 void usbLoop(bool firmware_present);
 void _rx_callback(unsigned char* buf);
-
+void blueParingdisplay(unsigned char* buf);
 #endif

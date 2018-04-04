@@ -11,6 +11,7 @@
 #include <libopencm3/stm32/f0/usart.h>
 #include "../timerbitpie.h"
 #include "uart.h"
+#include "usb.h"
 
 #define USART_ISR_IDLE			(1 << 4)
 #define USART_ISR(usart_base)		MMIO32((usart_base) + 0x1c)
@@ -294,6 +295,10 @@ void Uart_cmdprogam(void)
 	{
 		case 0x01://APDU值
 		  	Datas_rx_callback(uart_communicate_buf.data,uart_communicate_buf.length-4);
+		break;
+		case 0x07://
+			stm32workstatus=Stm32_idleMode;
+			blueParingdisplay(uart_communicate_buf.data);
 		break;
 	}
 }

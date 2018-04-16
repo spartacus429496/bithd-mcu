@@ -555,7 +555,7 @@ void _rx_callback(unsigned char* buf)
 				SuccessAck();
 				delay(100000);
 				layoutProgress("INSTALLING ... Please wait", 1000);
-				delay(100000);
+				delay(10000000);
 				if (!signatures_ok(NULL)) 
 				{	// erase code area
 				    layoutDialog(&bmp_icon_warning, NULL, NULL, NULL, "Firmware installation", "aborted.", NULL, "You need to repeat", "the procedure with", "the correct firmware.");

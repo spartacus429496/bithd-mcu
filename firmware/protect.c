@@ -30,7 +30,7 @@
 #include "debug.h"
 #include "gettext.h"
 
-#define MAX_WRONG_PINS 15
+#define MAX_WRONG_PINS 4
 
 bool protectAbortedByInitialize = false;
 unsigned char protectbuttonflag=0;
@@ -163,7 +163,7 @@ static void protectCheckMaxTry(uint32_t wait) {
 
 	storage_wipe();
 	layoutDialog(&bmp_icon_error, NULL, NULL, NULL, _("Too many wrong PIN"), _("attempts. Storage has"), _("been wiped."), NULL, _("Please unplug"), _("the device."));
-	for (;;) {} // loop forever
+	// for (;;) {} // loop forever
 }
 
 bool protectPin(bool use_cached)

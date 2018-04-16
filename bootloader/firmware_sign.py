@@ -15,15 +15,14 @@ SLOTS = 3
 
 signingbuf={
      
-    1:'F6B93601C6070261196191BEB27869DE597068E30808C5F6AA29F7A8B34A357C4A3113EB3E7599D5C6996EA269C4D3CF210F4340A45A7C889FF98EAF38FD9669',
+    1:'F3F78F2922F18D3A09769B3C449880632781D35FF5FBD96A4B6620DE1E31215549DC6ACF7CF04954E1DCE33B1A62859360631B3BA4FDC7B5281CEE86E00FC574',
     2:'3736AB760CBA80DD1DC032ACD7AE59AE751B1B08A3466D52A40B79BD6868D21C9607478CDC7FE4E15F856004B7A44C9A4E590B9D10E3713434C1AB7D2C944EC4',
-    3:'292F9C92CA8053BDB49E394C840A713E57F5EB700FC337BDF44EA8169B4136A2E614AAE0FCC8CC7F92FB4DDB3C6B43782178D61F43F6CE9DC072CCB6ACCAD44C',
-    4:'A8CD65CE462F19EC9A1F2A68638528436D531F91F1CDDA4CBA97E54E5C4E641978BCD4965CF47D80E9E650FBF79246014DFDDCD1A6500FCAA1923687FA9AB8B0',
-    5:'F9DD2AB97A234AEBA84015D310A2EC49531B90C2EBE24EA999277C4BF15B1C912B3A77535466A9DCF6705868F0F336489691C4B9A50D930745B4FC7435BFC63F',
+    3:'C161ACFD3CCD4DAA90721F403133FF90C44B2FAEFE06BF285ECD864A81478CD5E01D5A92EE0D855C3F15FAE893EF98F5F4E66D87EB0C191A8EF7DEEA0F7C07BA',
+    4:'06883EF8397E04DD321DE35B2063F1C1B0179D6BEBF49570F32A947B275FE9DE33A56C0A4BF51D4DA75223C18847590FD08C5B83A133CF02D4216CE26E95725D',
+    5:'50D1DBCBF86AF227E33247FA800A37C2279573C46038535847B256C379010BF08B36C346C0EBEBC4122EC19071D2B7A1C7701090791C1536C3FDFD89221287FB',
 }
 
 pubkeys = {
-  
     1: '048A6DEECF3C243CA373897A504B6910BE967CE511B7E08DBC2CB23B9A110F98E523A17ADDED4C2A133B2CBD7DF065EDC80425CAE71C90274469E17E0F631702D2',
     2: '04E4F37F1C2BEF3391D2D00171077410F5BB6802AB6E46406A9C4F834E733E2CB77D57F4CBF35F8592BDE201E64B4AC8C062ABB86E4512A4AF34DE6EE83A83B19F',
     3: '0468302E39022BA9DE1781A880ED0CF0741D5761BA534DE92F5BD8A884FBDD7FEB05D4808DF248A2161DABF789D8188897F32F40257F53E5AEF1211947F4DACC35',
@@ -167,7 +166,10 @@ def sign(data, is_pem):
 def main(args):
     if args.generate:
         print("BITHD produce")
-        for slot in range(1,4):
+        
+        for i in range(1,4):
+            slot = int(raw_input('Enter signature slot (1-%d): ' % 5))
+
             data = open(args.path, 'rb').read()
             if data[:4] != b'TRZR':
                 print("Metadata has been added...")
@@ -175,11 +177,28 @@ def main(args):
 
             if data[:4] != b'TRZR':
                 raise Exception("Firmware header expected")
-            data =modify(data, slot, slot, signingbuf[slot].decode("hex"))
-            print("datasave:",binascii.hexlify(data[SIG_START:SIG_START+192]))
+            data =modify(data, i, slot, signingbuf[slot].decode("hex"))
+            print("datasave:",binascii.hexlify(data[SIG_START:SIG_START+320]))
             fp = open(args.path, 'wb')
             fp.write(data)
             fp.close()
+
+
+        #for slot in range(3,6):
+        #    data = open(args.path, 'rb').read()
+        #    if data[:4] != b'TRZR':
+        #        print("Metadata has been added...")
+        #        data = prepare(data)
+
+        #    if data[:4] != b'TRZR':
+        #        raise Exception("Firmware header expected")
+        #    data =modify(data, slot, slot, signingbuf[slot].decode("hex"))
+        #    print("datasave:",binascii.hexlify(data[SIG_START:SIG_START+192]))
+        #    fp = open(args.path, 'wb')
+        #    fp.write(data)
+        #    fp.close()
+
+
         #key = ecdsa.SigningKey.generate(
         #    curve=ecdsa.curves.SECP256k1,
         #    hashfunc=hashlib.sha256)

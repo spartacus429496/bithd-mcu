@@ -134,6 +134,9 @@ void bootloader_loop(void)
 
 int main(void)
 {
+	unsigned char bufacksigendsucess[]={0x90,0x00};
+	unsigned char bufacksigenderro[]={0x67,0x00};
+
 #ifndef APPVER
 	setup();
 #endif
@@ -150,30 +153,56 @@ int main(void)
 
 
 /////////////////////////////////////////////////
-uint16_t state = gpio_port_read(BitBTN_PORT);
-	delay(100000);
-	if ((state & BitBTN_PIN_YES) == BitBTN_PIN_YES)
-	{
+    uint16_t state= gpio_port_read(BitBTN_PORT);
 
-		if (firmware_present()) 
+    delay(100000);
+    state = gpio_port_read(GPIOB);
+ 	if ((state & GPIO5) == GPIO5)
+    {
+		usart_setup();    //uart init 115200
+		if (!signatures_ok(NULL)) 
 		{
-			if (!signatures_ok(NULL)) 
-			{
-				layoutDialog(&bmp_icon_warning, NULL, NULL, NULL, "Firmware installation", "aborted.", NULL, "You need to repeat", "the procedure with", "the correct firmware.");
-				flash_unlock();
-				for (int i = FLASH_CODE_SECTOR_FIRST; i <= FLASH_CODE_SECTOR_LAST; i++) {
-					flash_erase_sector(i, FLASH_CR_PROGRAM_X32);
-				}
-				flash_lock();
-			}
-			else
-			{
-                load_app();
-			}	
+		  CmdSendUart(5,bufacksigenderro,2);
 		}
+		else
+		{
+		  CmdSendUart(5,bufacksigendsucess,2);
+		}	
+		for (;;) 
+		{
+		UartDataSendrecive();
+		}	
 	}
-	usart_setup();    //uart init 115200
-	bootloader_loop();
+	else
+	{
+		state = gpio_port_read(BitBTN_PORT);
+		oledClear();
+		oledDrawBitmap(40, 8,&bmp_logo64);
+		oledRefresh();
+		
+		if ((state & BitBTN_PIN_YES) == BitBTN_PIN_YES)
+		{
+
+			if (firmware_present()) 
+			{
+				if (!signatures_ok(NULL)) 
+				{
+					layoutDialog(&bmp_icon_warning, NULL, NULL, NULL, "Firmware installation", "aborted.", NULL, "You need to repeat", "the procedure with", "the correct firmware.");
+					flash_unlock();
+					for (int i = FLASH_CODE_SECTOR_FIRST; i <= FLASH_CODE_SECTOR_LAST; i++) {
+						flash_erase_sector(i, FLASH_CR_PROGRAM_X32);
+					}
+					flash_lock();
+				}
+				else
+				{
+					load_app();
+				}	
+			}
+		}
+		usart_setup();    //uart init 115200
+		bootloader_loop();
+	}
 
 	return 0;
 }

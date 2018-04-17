@@ -74,6 +74,7 @@ void storage_applyFlags(uint32_t flags);
 uint32_t storage_getFlags(void);
 
 void storage_wipe(void);
+void storage_wipe_pinerr(void);
 
 extern Storage storage;
 

@@ -643,10 +643,17 @@ void storage_setU2FCounter(uint32_t u2fcounter)
 	storage_commit();
 }
 
+void storage_wipe_pinerr(void)
+{
+	storage_reset();
+	storage_reset_uuid();
+	storage_clearPinArea();
+}
+
 void storage_wipe(void)
 {
 	storage_reset();
 	storage_reset_uuid();
-	// storage_commit();
+	storage_commit();
 	storage_clearPinArea();
 }

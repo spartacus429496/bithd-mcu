@@ -24,7 +24,7 @@ extern TimProg T_Connect;                                //communicate timeout t
  #define uart_first_0x5a  8
  #define uart_secend_0xa5 9
 
- #define MAX_resend 3 //最大重发次数
+ #define MAX_resend 10 //最大重发次数
 
  #define NOACK    0
  #define SuccsACK 1

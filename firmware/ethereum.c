@@ -525,6 +525,7 @@ void ethereum_signing_init(EthereumSignTx *msg, const HDNode *node)
 				TOKEN.chain_id=chain_id;
 				memcpy(TOKEN.address,msg->to.bytes,20);
 				memcpy(TOKEN.ticker,msg->TOKENticker.bytes,msg->TOKENticker.size);
+				TOKEN.ticker[msg->TOKENticker.size]=0;
 				TOKEN.decimals=msg->TOKENdecimals;
 				token=&TOKEN;
 			}

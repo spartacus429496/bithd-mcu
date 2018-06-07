@@ -166,8 +166,8 @@ return 1 have balance
 */
 unsigned char JudgeBalance(void)
 {
-    unsigned char buf[10]={0,0,0,0,0,0,0,0,0,0};
-    if((memcmp(&(Balancedisplaybuf.balance),buf,10))||(memcmp(&(Balancedisplaybuf.balance_after_di),buf,10)))
+    unsigned char buf[]={0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0};
+    if(memcmp(&(Balancedisplaybuf.coin_name),buf,10))//((memcmp(&(Balancedisplaybuf.balance),buf,10))||(memcmp(&(Balancedisplaybuf.balance_after_di),buf,10)))
     {return 1;}
     return 0;
 }

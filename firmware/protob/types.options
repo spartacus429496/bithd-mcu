@@ -72,3 +72,9 @@ NEMAggregateModification.modifications	max_count:16
 NEMCosignatoryModification.public_key	max_size:32
 
 NEMImportanceTransfer.public_key	max_size:32
+
+EOSActionType.authorization         max_count:16
+EOSActionType.data                  max_size:1024
+
+EOSTransactionType.free_actions     max_count:16
+EOSTransactionType.actions          max_count:16

@@ -189,3 +189,11 @@ DebugLinkLog.text			max_size:256
 
 DebugLinkMemory.memory			max_size:1024
 DebugLinkMemoryWrite.memory		max_size:1024
+
+EOSSignTx.address_n             max_count:8
+EOSSignTx.chain_id              max_size:32
+
+EOSTxAck.data                   max_size:1024
+
+EOSTxSignature.signature_r      max_size:32
+EOSTxSignature.signature_s      max_size:32

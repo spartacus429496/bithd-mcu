@@ -58,3 +58,5 @@ void delete_tail_dot(char*, int, char*, int*);
 int len_expcet_tail_dot(char*, int);
 
 uint64_t read_variable_uint(uint8_t*, int);
+
+void symbol2str(uint64_t, char *);

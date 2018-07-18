@@ -77,3 +77,21 @@ uint64_t read_variable_uint(uint8_t * src, int postion)
 	} while ( (b & 0x80) != 0);
 	return value;
 }
+
+void symbol2str(uint64_t symbol, char *symbol_str) 
+{
+	char str_tmp[8];
+	int symbolLen = 0;
+	for ( int i = 1; i < 8; i++) {
+		char oneChar = (char)( (symbol >> (8*i)) & 0xFF );
+		if ( oneChar != 0 ) {
+			str_tmp[i] = oneChar;
+			symbolLen++;
+		}
+		else {
+			break;
+		}
+	}
+	str_tmp[symbolLen + 1] = '\0';
+	memcmp(symbol_str, str_tmp + 1, symbolLen);
+}

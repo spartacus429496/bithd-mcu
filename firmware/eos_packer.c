@@ -93,5 +93,5 @@ void symbol2str(uint64_t symbol, char *symbol_str)
 		}
 	}
 	str_tmp[symbolLen + 1] = '\0';
-	memcmp(symbol_str, str_tmp + 1, symbolLen);
+	memcopy(symbol_str, str_tmp + 1, symbolLen);
 }

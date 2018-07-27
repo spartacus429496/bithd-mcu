@@ -1,13 +1,13 @@
 #include <stdint.h>
 
-#define MAX_NAME_IDX 			12
-
-#define EOS_ACTION_VOTE 		0xdd32aade89d21800
+#define MAX_NAME_IDX 			13
+#define ACCOUNT_EOSIO  			0x5530ea0000000000
+#define EOS_ACTION_VOTE 		0xdd32aade89d21570
 #define EOS_ACTION_TRANSMFER 	0xcdcd3c2d57000000
 #define EOS_ACTION_DELEGATE 	0x4aa2a61b2a3f0000
-#define EOS_ACTION_UNDELEGATE 	0xd4d2a8a986ca9000
+#define EOS_ACTION_UNDELEGATE 	0xd4d2a8a986ca8fc0
 #define EOS_ACTION_BUY_RAM		0x3ebd734800000000
-#define EOS_ACTION_SELL_RAM		0xc2a31b9800000000
+#define EOS_ACTION_SELL_RAM		0xc2a31b9a40000000
   
 typedef uint64_t EosAccountName;
 typedef uint64_t EosTypeName;
@@ -36,6 +36,7 @@ typedef struct eos_delegate {
  	EosAccountName 	receiver;
 	EosTypeAsset 	net_quantity;
 	EosTypeAsset 	cpu_quantity;
+	uint8_t			unused_data;
 } EosDelegate, EosUndelegate;
 
 typedef struct eos_buy_ram {
@@ -57,6 +58,11 @@ void delete_tail_dot(char*, int, char*, int*);
 
 int len_expcet_tail_dot(char*, int);
 
-uint64_t read_variable_uint(uint8_t*, int);
-
-void symbol2str(uint64_t, char *);
+int read_variable_uint(uint8_t *src, int postion,uint64_t *value);
+uint8_t symbol2str(uint64_t, char *);
+uint32_t bytes_to_uint32(uint8_t *pbuff);
+uint64_t byte_reverse_to_64(uint8_t *buff);
+void uint32_reverse_to_bytes(uint32_t a,uint8_t *pbuff,uint8_t count);
+uint8_t uint64_to_numstring(uint64_t in,char *out);
+uint8_t uint64_to_numstring_point(uint64_t in, char *out,uint8_t point_pos);
+uint8_t uint64_to_num(uint64_t in, char *out);

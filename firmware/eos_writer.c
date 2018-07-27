@@ -6,11 +6,10 @@ static uint8_t* _buf;
 static int _index;
 static int _capacity;
 
-void wirter_reset(void) 
+void wirter_reset(uint8_t *pBuff) 
 {
-    char buf[INIT_CAPACITY];
-    memset(buf, 0, INIT_CAPACITY);
-    _buf = (uint8_t *) buf;
+    memset(pBuff, 0, INIT_CAPACITY);
+    _buf = (uint8_t *) pBuff;
     _index = 0;
     _capacity = INIT_CAPACITY;
 }
@@ -23,7 +22,7 @@ void ensure_capacity(int capacity)
         char tmp[new_len];
         memset(tmp, 0, new_len);
         memcpy(tmp, _buf, _index);
-        free(_buf);
+        //free(_buf);
         _buf = (uint8_t *)tmp;
         _capacity = new_len;
     }
@@ -77,12 +76,12 @@ void wirter_to_bytes(uint8_t *bytes, int *len)
     *len = _index;
 }
 
-void wirter_bytes_length(int *len)
+void wirter_bytes_length(uint16_t *len)
 {
     *len = _index;
 }
 
-void wirter_put_variable_uint(uint64_t val)
+void  wirter_put_variable_uint(uint64_t val)
 {
     do {
         uint8_t b = (uint8_t)((val) & 0x7f);

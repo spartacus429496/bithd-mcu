@@ -15,4 +15,4 @@ void reader_get_bytes(uint8_t *, size_t);
 
 void reader_get_variable_uint(uint64_t *);
 
-void reader_free();
+void reader_free(void);

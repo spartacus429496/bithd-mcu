@@ -192,8 +192,10 @@ DebugLinkMemoryWrite.memory		max_size:1024
 
 EOSSignTx.address_n                             max_count:8
 EOSSignTx.chain_id                              max_size:32
-EOSSignTx.transaction.expiration                max_size:32
-EOSSignTx.transaction.transaction_extensions    max_size:32
+EOSSignTx.free_actions                          max_size:1024
+EOSSignTx.actions                               max_size:1024
+EOSSignTx.transaction_extensions                max_count:4
+EOSSignTx.transaction_extensions                max_size:32
 
 EOSTxAck.data                   max_size:1024
 

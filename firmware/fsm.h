@@ -65,6 +65,8 @@ void fsm_msgEthereumSignTx(EthereumSignTx *msg);
 void fsm_msgEthereumTxAck(EthereumTxAck *msg);
 void fsm_msgEthereumSignMessage(EthereumSignMessage *msg);
 void fsm_msgEthereumVerifyMessage(EthereumVerifyMessage *msg);
+void fsm_msgEOSSignTx(EOSSignTx *msg);
+void fsm_msgEOSTxAck(EOSTxAck *msg);
 
 void fsm_msgNEMGetAddress(NEMGetAddress *msg);
 void fsm_msgNEMSignTx(NEMSignTx *msg);

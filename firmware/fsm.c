@@ -55,6 +55,7 @@
 #include "nem2.h"
 #include "rfc6979.h"
 #include "gettext.h"
+#include "eos.h"
 
 // message methods
 
@@ -154,6 +155,8 @@ void fsm_sendFailure(FailureType code, const char *text)
 			case FailureType_Failure_FirmwareError:
 				text = _("Firmware error");
 				break;
+			case FailureType_Failure_PinMismatch:
+				text = _("Pin mismatch");
 		}
 	}
 	if (text) {
@@ -534,6 +537,23 @@ void fsm_msgEthereumSignTx(EthereumSignTx *msg)
 	ethereum_signing_init(msg, node);
 }
 
+void fsm_msgEOSTxAck(EOSTxAck *msg)
+{
+	CHECK_PARAM(msg->has_data, _("No transaction provided"));
+
+	//signing_txack(&(msg->data));
+}
+void fsm_msgEOSSignTx(EOSSignTx *msg)
+{
+	CHECK_INITIALIZED
+	
+	CHECK_PIN
+
+	const HDNode *node = fsm_getDerivedNode(SECP256K1_NAME, msg->address_n, msg->address_n_count);
+	if (!node) return;
+
+	eos_signing_init(msg,node);
+}
 void fsm_msgEthereumTxAck(EthereumTxAck *msg)
 {
 	ethereum_signing_txack(msg);

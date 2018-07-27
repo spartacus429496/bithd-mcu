@@ -1,5 +1,6 @@
 #ifndef _uart_H_
 #define _uart_H_
+#include "timerbitpie.h"
 
 extern TimProg T_Connect;                                //communicate timeout timer
 

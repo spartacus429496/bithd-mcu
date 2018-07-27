@@ -21,8 +21,8 @@
 #define __TREZOR_H__
 
 #define VERSION_MAJOR 2
-#define VERSION_MINOR 1
-#define VERSION_PATCH 2
+#define VERSION_MINOR 2
+#define VERSION_PATCH 0
 
 #define STR(X) #X
 #define VERSTR(X) STR(X)
@@ -32,7 +32,7 @@
 #endif
 
 #ifndef DEBUG_LOG
-#define DEBUG_LOG 0
+#define DEBUG_LOG 1
 #endif
 
 #define BTC_balance 0

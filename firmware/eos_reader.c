@@ -42,9 +42,9 @@ void reader_get_int(uint32_t *i)
 void reader_get_long(uint64_t *l)
 {
     if(check_available(8)){
-        *l = ((_buf[_index++] & 0xFFL)) | ((_buf[_index++] & 0xFFL) << 8) | ((_buf[_index++] & 0xFFL) << 16)
-            | ((_buf[_index++] & 0xFFL) << 24) | ((_buf[_index++] & 0xFFL) << 32) | ((_buf[_index++] & 0xFFL) << 40)
-            | ((_buf[_index++] & 0xFFL) << 48) | ((_buf[_index++] & 0xFFL) << 56);
+        *l = ((_buf[_index++] & 0xFFL)) | ((uint64_t)(_buf[_index++] & 0xFFL) << 8) | ((uint64_t)(_buf[_index++] & 0xFFL) << 16)
+            | ((uint64_t)(_buf[_index++] & 0xFFL) << 24) | ((uint64_t)(_buf[_index++] & 0xFFL) << 32) | ((uint64_t)(_buf[_index++] & 0xFFL) << 40)
+            | ((uint64_t)(_buf[_index++] & 0xFFL) << 48) | ((uint64_t)(_buf[_index++] & 0xFFL) << 56);
     }
 }
 
@@ -59,7 +59,7 @@ void reader_get_bytes(uint8_t *bytes, size_t len)
 void reader_get_variable_uint(uint64_t *val)
 {
     uint64_t v = 0;
-    uint8_t b, by = 0;
+    uint8_t b=0, by = 0;
     do {
         reader_get(&b);
         v |= ( b & 0x7F) << by;
@@ -69,7 +69,8 @@ void reader_get_variable_uint(uint64_t *val)
     *val = v;
 }
 
-void reader_free() {
+void reader_free(void) 
+{
     // free(_buf);
     _length = 0;
     _index = 0;

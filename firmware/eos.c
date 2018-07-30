@@ -236,7 +236,7 @@ static void layoutEosconfirmTxUNDELEGATE(uint8_t *data,uint64_t size)
 			strlcpy(_to5, "", sizeof(_to5));
 		}
 		
-		if((from_len>14)||(net_amtlen>12)||(cpu_amtlen>12)||(from_len == 0))
+		if((from_len>20)||(net_amtlen>20)||(cpu_amtlen>20))
 		{
 			strlcpy(_to1, _("Data Error"), sizeof(_to1));
 			strlcpy(_to2, "", sizeof(_to2));

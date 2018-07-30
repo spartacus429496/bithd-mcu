@@ -106,6 +106,8 @@ static void layoutEosconfirmTxDELEGATE(uint8_t *data,uint64_t size)
 	memset(_to4,0,sizeof(_to4));
 	char _to5[20] = "Get ";
 	
+	memset(net_amountbuf,0,sizeof(net_amountbuf));
+	
     if (size) {
 		from = byte_reverse_to_64((uint8_t*)data);
     	from_len = name_to_string(from,frombuf);
@@ -329,7 +331,6 @@ static void layoutEosconfirmTxSELL_RAM(uint8_t *data,uint64_t size)
 		memcpy(_to2, frombuf, from_len);
 
 		amount = byte_reverse_to_64((uint8_t*)(data+8));
-		amount = 100000000000;
 		amtlen = uint64_to_num(amount, amountbuf);
 		memcpy(_to4, amountbuf, amtlen);
 		memcpy(_to4+amtlen,"(Bytes)",7);

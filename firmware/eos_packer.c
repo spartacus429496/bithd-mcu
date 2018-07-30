@@ -222,24 +222,27 @@ uint8_t uint64_to_numstring_point(uint64_t in, char *out,uint8_t point_pos)
 	count += point_pos;
 	*(out+count) = '.';
 	count++;
-	
+
 	last_len = len - point_pos;
-	if(last_len <=0)
+	if(len <= point_pos)
 	{
 		*(out+count) = '0';
 		count ++;
 	}
-	for(i=0;i<last_len/3;i++)
+	else
 	{
-		memcpy(&out[count],&tembuff[count_temp],3);		
-		count +=3;
-		if(len-count_temp<=3)
+		for(i=0;i<last_len/3;i++)
 		{
-			break;
+			memcpy(&out[count],&tembuff[count_temp],3);		
+			count +=3;
+			if(len-count_temp<=3)
+			{
+				break;
+			}
+			*(out+count) = ',';
+			count += 1;
+			count_temp += 3;
 		}
-		*(out+count) = ',';
-		count += 1;
-		count_temp += 3;
 	}
 	
 	len -= count_temp;

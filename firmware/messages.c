@@ -30,9 +30,6 @@
 #include "pb_encode.h"
 #include "messages.pb.h"
 
-//jyjdebug
-#include "uart.h"
-
 struct MessagesMap_t {
 	char type;	// n = normal, d = debug
 	char dir; 	// i = in, o = out

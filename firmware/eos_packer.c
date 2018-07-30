@@ -200,72 +200,108 @@ uint8_t uint64_to_numstring(uint64_t in, char *out)
 
 uint8_t uint64_to_numstring_point(uint64_t in, char *out,uint8_t point_pos)
 {
-	char tembuff[11];
-	uint8_t len, i;
-
-	for (i = 0; i < 11; i++)
-	{
-		out[i] = (in % 10) + 0x30;
-		in /= 10;
-	}
-	for (i = 10; i > 0; i--)
-	{
-		if (out[i] != 0x30)
-		{
-			break;
-		}
-	}
-	len = i+1;
-
-	if(in <10000)
-	{
-		len = point_pos+2;
-	}
-	else
-	{
-		len = point_pos+1;
-	}
-	memcpy(tembuff,out+(4-point_pos),len);
-	memcpy(out,tembuff,len);
-	memset(tembuff,0x30,sizeof(tembuff));
-
-	memcpy(tembuff, &out[point_pos], len - point_pos);
-	*(out + point_pos) = '.';
-	memcpy(&out[point_pos+1], tembuff, len - point_pos);
-
-	for (i = 0; i < len; i++)
-	{
-		tembuff[i] = out[len -i-1];
-	}
-	memcpy(out, tembuff, len);
-
-	return len;
-}
-
-uint8_t uint64_to_num(uint64_t in, char *out)
-{
-	char tembuff[20];
-	uint8_t len, i;
+	char tembuff[32];
+	uint8_t len,last_len=0, i,count=0,count_temp=0;
 
 	for (i = 0; i < 20; i++)
 	{
-		out[i] = (in % 10) + 0x30;
+		tembuff[i] = (in % 10) + 0x30;
 		in /= 10;
 	}
 	for (i = 19; i > 0; i--)
 	{
-		if (out[i] != 0x30)
+		if (tembuff[i] != 0x30)
 		{
 			break;
 		}
 	}
 	len = i+1;
 
-	for (i = 0; i < len; i++)
+	memcpy(out,tembuff,point_pos);
+	count_temp +=point_pos;
+	count += point_pos;
+	*(out+count) = '.';
+	count++;
+	
+	last_len = len - point_pos;
+	if(last_len <=0)
 	{
-		tembuff[i] = out[len - i-1];
+		*(out+count) = '0';
+		count ++;
 	}
-	memcpy(out, tembuff, len);
+	for(i=0;i<last_len/3;i++)
+	{
+		memcpy(&out[count],&tembuff[count_temp],3);		
+		count +=3;
+		if(len-count_temp<=3)
+		{
+			break;
+		}
+		*(out+count) = ',';
+		count += 1;
+		count_temp += 3;
+	}
+	
+	len -= count_temp;
+	if(len<3)
+	{
+		memcpy(&out[count],&tembuff[count_temp],len);		
+		count +=len;
+	}
 
-	return len;
+	for (i = 0; i < count; i++)
+	{
+		tembuff[i] = out[count -i-1];
+	}
+	memcpy(out, tembuff, count);
+
+	return count;
+}
+
+uint8_t uint64_to_num(uint64_t in, char *out)
+{
+	char tembuff[32];
+	uint8_t len, i,count=0,count_temp=0;
+
+	for (i = 0; i < 20; i++)
+	{
+		tembuff[i] = (in % 10) + 0x30;
+		in /= 10;
+	}
+	for (i = 19; i > 0; i--)
+	{
+		if (tembuff[i] != 0x30)
+		{
+			break;
+		}
+	}
+	len = i+1;
+
+	for(i=0;i<len/3;i++)
+	{
+		memcpy(&out[count],&tembuff[count_temp],3);		
+		count +=3;
+		if(len-count_temp<=3)
+		{
+			break;
+		}
+		*(out+count) = ',';
+		count += 1;
+		count_temp += 3;
+	}
+	
+	len -= count_temp;
+	if(len<3)
+	{
+		memcpy(&out[count],&tembuff[count_temp],len);		
+		count +=len;
+	}
+
+	for (i = 0; i < count; i++)
+	{
+		tembuff[i] = out[count -i-1];
+	}
+	memcpy(out, tembuff, count);
+
+	return count;
 }

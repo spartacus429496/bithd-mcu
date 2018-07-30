@@ -30,57 +30,56 @@ static inline void hash_data(const uint8_t *buf, size_t size)
 	sha256_Update(&sha256_ctx, buf, size);
 }
 
-
-
 static void layoutEosconfirmTxTRANSMFER(uint8_t *data,uint64_t size)
 {
-	uint64_t from;
-	char frombuf[20];
-	uint8_t len_from;
 	uint64_t to;
 	char tobuf[20];
 	uint8_t len_to;
 	uint64_t amount;
     char amountbuf[32];
-	uint8_t len_amount;
+	uint8_t len_amount=0;
 	uint8_t point_pos;
-
-    char _to1[20] = "From: ";
-	char _to2[20] = "To: ";
-	char _to3[20] = "Amount:";
-	char _to4[20];
-	memset(_to4,0,sizeof(_to4));
+	uint8_t len_1=0,len_2=0;
+    char _to1[20] = "Send: ";
+	char _to2[19];
+	char _to3[19];
+	memset(_to2,0,sizeof(_to2));
+	memset(_to3,0,sizeof(_to3));
 
     if (size) {
-		from = byte_reverse_to_64((uint8_t*)data);
-    	len_from = name_to_string(from,frombuf);
-		memcpy(_to1 + 6, frombuf, len_from);
-
 		to = byte_reverse_to_64((uint8_t*)(data+8));
 		len_to = name_to_string(to,tobuf);
-		memcpy(_to2+4,tobuf,len_to);
+		memcpy(_to1+6,tobuf,len_to);
 
 		point_pos = *(data+24);
-		
-		amount = byte_reverse_to_64((uint8_t*)(data+16));
+		amount = byte_reverse_to_64((uint8_t*)(data+16));	
 		len_amount = uint64_to_numstring_point(amount, amountbuf,point_pos);
-		memcpy(_to4, amountbuf, len_amount);
-		memcpy(_to4+len_amount,(uint8_t*)(data+25),7);
-		
+		if(len_amount >18)
+		{
+			len_1 = 18;
+			len_2 = len_amount - len_1;
+			memcpy(_to2, amountbuf, len_1);
+			memcpy(_to3,&amountbuf[len_1],len_2);
+			memcpy(_to3+len_2,(uint8_t*)(data+25),7);
+		}
+		else
+		{
+			memcpy(_to2, amountbuf, len_amount);
+			memcpy(_to2+len_amount,(uint8_t*)(data+25),7);
+		}	
 	} else {
 		strlcpy(_to1, _("to new contract?"), sizeof(_to1));
 		strlcpy(_to2, "", sizeof(_to2));
-		strlcpy(_to3, "", sizeof(_to3));
 	}
 
 	layoutDialogSwipe(&bmp_icon_question,
 		_("Cancel"),
 		_("Confirm"),
-		_("Transfer Action"),
+		_("Transfer action"),
 		_to1,
+		_("Amount: "),
 		_to2,
 		_to3,
-		_to4,
 		NULL,
 		NULL
 	);
@@ -115,7 +114,7 @@ static void layoutEosconfirmTxDELEGATE(uint8_t *data,uint64_t size)
 		net_amount = byte_reverse_to_64((uint8_t*)(data+16));
 		if(net_amount != 0)
 		{
-			net_amtlen = uint64_to_numstring(net_amount, net_amountbuf);
+			net_amtlen = uint64_to_numstring_point(net_amount, net_amountbuf,4);
 			memcpy(_to2, net_amountbuf, net_amtlen);
 			memcpy(_to2+net_amtlen,data+25,*(data+24)-1);//symbol
 			memcpy(_to3+4,"Net Resources",13);
@@ -125,7 +124,7 @@ static void layoutEosconfirmTxDELEGATE(uint8_t *data,uint64_t size)
 		cpu_amount = byte_reverse_to_64((uint8_t*)(data+32));
 		if(cpu_amount != 0)
 		{
-			cpu_amtlen = uint64_to_numstring(cpu_amount, cpu_amountbuf);
+			cpu_amtlen = uint64_to_numstring_point(cpu_amount, cpu_amountbuf,4);
 			if(flag == 1)
 			{
 				memcpy(_to4, cpu_amountbuf, cpu_amtlen);	
@@ -147,7 +146,7 @@ static void layoutEosconfirmTxDELEGATE(uint8_t *data,uint64_t size)
 			strlcpy(_to5, "", sizeof(_to5));
 		}
 		
-		if((from_len>14)||(net_amtlen>12)||(cpu_amtlen>12))
+		if((from_len>20)||(net_amtlen>20)||(cpu_amtlen>20))
 		{
 			strlcpy(_to1, _("Data Error"), sizeof(_to1));
 			strlcpy(_to2, "", sizeof(_to2));
@@ -204,7 +203,7 @@ static void layoutEosconfirmTxUNDELEGATE(uint8_t *data,uint64_t size)
 		net_amount = byte_reverse_to_64((uint8_t*)(data+16));
 		if(net_amount != 0)
 		{
-			net_amtlen = uint64_to_numstring(net_amount, net_amountbuf);
+			net_amtlen = uint64_to_numstring_point(net_amount, net_amountbuf,4);
 			memcpy(_to2, net_amountbuf, net_amtlen);
 			memcpy(_to2+net_amtlen,data+25,*(data+24)-1);//symbol
 			memcpy(_to3+4,"Net Resources",13);
@@ -213,7 +212,7 @@ static void layoutEosconfirmTxUNDELEGATE(uint8_t *data,uint64_t size)
 		cpu_amount = byte_reverse_to_64((uint8_t*)(data+32));
 		if(cpu_amount != 0)
 		{
-			cpu_amtlen = uint64_to_numstring(cpu_amount, cpu_amountbuf);
+			cpu_amtlen = uint64_to_numstring_point(cpu_amount, cpu_amountbuf,4);
 			if(flag == 1)
 			{
 				memcpy(_to4, cpu_amountbuf, cpu_amtlen);	
@@ -286,7 +285,7 @@ static void layoutEosconfirmTxBUY_RAM(uint8_t *data,uint64_t size)
 		memcpy(_to2, frombuf, from_len);
 
 		amount = byte_reverse_to_64((uint8_t*)(data+16));
-		amtlen = uint64_to_numstring(amount, amountbuf);
+		amtlen = uint64_to_numstring_point(amount, amountbuf,4);
 		memcpy(_to4, amountbuf, amtlen);
 		memcpy(_to4+amtlen,"(EOS)",5);
 	} else {
@@ -316,12 +315,12 @@ static void layoutEosconfirmTxSELL_RAM(uint8_t *data,uint64_t size)
 	uint64_t amount;
 	char amountbuf[64];
 	size_t amtlen=0;
-	char _to2[20];
-	char _to4[20];
-
+	
 	char _to1[20] = "Account: ";
+	char _to2[20];
 	memset(_to2,0,sizeof(_to2));
-	char _to3[20] = "Amount: ";
+	char _to3[20] = "Sell: ";
+	char _to4[20];
 	memset(_to4,0,sizeof(_to4));
 
     if (size) {
@@ -330,6 +329,7 @@ static void layoutEosconfirmTxSELL_RAM(uint8_t *data,uint64_t size)
 		memcpy(_to2, frombuf, from_len);
 
 		amount = byte_reverse_to_64((uint8_t*)(data+8));
+		amount = 100000000000;
 		amtlen = uint64_to_num(amount, amountbuf);
 		memcpy(_to4, amountbuf, amtlen);
 		memcpy(_to4+amtlen,"(Bytes)",7);
@@ -341,7 +341,7 @@ static void layoutEosconfirmTxSELL_RAM(uint8_t *data,uint64_t size)
 	layoutDialogSwipe(&bmp_icon_question,
 		_("Cancel"),
 		_("Confirm"),
-		_("Sell ram ?"),
+		_("Sell Ram ?"),
 		_to1,
 		_to2,
 		_to3,

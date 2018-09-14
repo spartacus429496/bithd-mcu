@@ -456,7 +456,7 @@ void signing_init(uint32_t _inputs_count, uint32_t _outputs_count, const CoinInf
 	change_spend = 0;
 	authorized_amount = 0;
 	inputs_amount = 0;
-	skip_check_prev_tx = false;
+	skip_check_prev_tx = _inputs_count > MAX_CHECK_COUNT;
 
 	memset(&input, 0, sizeof(TxInputType));
 	memset(&resp, 0, sizeof(TxRequest));

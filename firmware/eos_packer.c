@@ -58,6 +58,8 @@ int len_expcet_tail_dot(char *src, int len)
 		else
 			break;
 	}
+	if(i >= len)
+		return i;
 	len = len - i;
 	memmove(src, &src[i], len);
 	for (i = 0; i <= len; i++)

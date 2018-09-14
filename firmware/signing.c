@@ -58,7 +58,7 @@ static uint8_t CONFIDENTIAL privkey[32];
 static uint8_t pubkey[33], sig[64];
 static uint8_t hash_prevouts[32], hash_sequence[32],hash_outputs[32];
 static uint8_t hash_check[32];
-static uint64_t to_spend, authorized_amount, spending, change_spend;
+static uint64_t to_spend, inputs_amount, authorized_amount, spending, change_spend;
 static uint32_t version = 1;
 static uint32_t lock_time = 0;
 static uint32_t next_nonsegwit_input;
@@ -68,6 +68,7 @@ static uint8_t multisig_fp[32];
 static uint32_t in_address_n[8];
 static size_t in_address_n_count;
 static uint32_t tx_weight;
+static bool skip_check_prev_tx;
 
 /* A marker for in_address_n_count to indicate a mismatch in bip32 paths in
    input */
@@ -86,6 +87,9 @@ static uint32_t tx_weight;
 #define TXSIZE_FOOTER 4
 /* transaction segwit overhead 2 marker */
 #define TXSIZE_SEGWIT_OVERHEAD 2
+
+#define ENABLE_LOWER_SPEED_BLE 1
+#define MAX_CHECK_COUNT 50
 
 enum {
 	SIGHASH_ALL = 1,
@@ -451,6 +455,9 @@ void signing_init(uint32_t _inputs_count, uint32_t _outputs_count, const CoinInf
 	spending = 0;
 	change_spend = 0;
 	authorized_amount = 0;
+	inputs_amount = 0;
+	skip_check_prev_tx = false;
+
 	memset(&input, 0, sizeof(TxInputType));
 	memset(&resp, 0, sizeof(TxRequest));
 
@@ -595,6 +602,12 @@ static bool signing_check_output(TxOutputType *txoutput) {
 }
 
 static bool signing_check_fee(void) {
+
+#if ENABLE_LOWER_SPEED_BLE
+	if (skip_check_prev_tx) {
+		to_spend = inputs_amount;
+	}
+#endif
 	// check fees
 	if (spending > to_spend) {
 		fsm_sendFailure(FailureType_Failure_NotEnoughFunds, _("Not enough funds"));
@@ -809,6 +822,7 @@ void signing_txack(TransactionType *tx)
 	switch (signing_stage) {
 		case STAGE_REQUEST_1_INPUT:
 			signing_check_input(&tx->inputs[0]);
+			inputs_amount += tx->inputs[0].amount;
 			tx_weight += tx_input_weight(&tx->inputs[0]);
 			if (tx->inputs[0].script_type == InputScriptType_SPENDMULTISIG
 				|| tx->inputs[0].script_type == InputScriptType_SPENDADDRESS) {
@@ -888,6 +902,17 @@ void signing_txack(TransactionType *tx)
 			tx_init(&tp, tx->inputs_cnt, tx->outputs_cnt, tx->version, tx->lock_time, tx->extra_data_len);
 			progress_meta_step = progress_step / (tp.inputs_len + tp.outputs_len);
 			idx2 = 0;
+
+#if ENABLE_LOWER_SPEED_BLE
+			if (tx->inputs_cnt > MAX_CHECK_COUNT || tx->outputs_cnt > MAX_CHECK_COUNT) {
+				skip_check_prev_tx = true;
+			}
+
+			if (skip_check_prev_tx) {
+				phase1_request_next_input();
+				return;
+			}
+#endif
 			if (tp.inputs_len > 0) {
 				send_req_2_prev_input();
 			} else {

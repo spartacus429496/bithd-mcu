@@ -36,6 +36,8 @@
 #include "../timerbitpie.h"
 #include "./uart.h"
 
+#define PROTECTED 0
+
 void layoutFirmwareHash(const uint8_t *hash)
 {
 	char str[4][17];
@@ -142,7 +144,9 @@ int main(void)
 #endif
 	__stack_chk_guard = random32(); // this supports compiler provided unpredictable stack protection checks
 #ifndef APPVER
+#if PROTECTED
 	memory_protect();
+#endif
 	oledInit();
 #endif
 ///////////////////////////////////////////
@@ -182,7 +186,7 @@ int main(void)
 		
 		if ((state & BitBTN_PIN_YES) == BitBTN_PIN_YES)
 		{
-
+#if PROTECTED
 			if (firmware_present()) 
 			{
 				if (!signatures_ok(NULL)) 
@@ -196,9 +200,12 @@ int main(void)
 				}
 				else
 				{
+#endif
 					load_app();
+#if PROTECTED
 				}	
 			}
+#endif
 		}
 		usart_setup();    //uart init 115200
 		bootloader_loop();

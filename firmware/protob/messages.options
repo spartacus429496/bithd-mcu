@@ -201,3 +201,26 @@ EOSTxAck.data                   max_size:1024
 
 EOSTxSignature.signature_r      max_size:32
 EOSTxSignature.signature_s      max_size:32
+
+EthereumSignGenerateMultisigContract.address_n          max_count:8
+EthereumSignGenerateMultisigContract.nonce			    max_size:32
+EthereumSignGenerateMultisigContract.gas_price		    max_size:32
+EthereumSignGenerateMultisigContract.gas_limit		    max_size:32
+EthereumSignGenerateMultisigContract.owners			    max_size:20
+EthereumSignGenerateMultisigContract.owners			    max_count:50
+
+EthereumSignSubmitMultisigTx.address_n		            max_count:8
+EthereumSignSubmitMultisigTx.nonce			            max_size:32
+EthereumSignSubmitMultisigTx.gas_price		            max_size:32
+EthereumSignSubmitMultisigTx.gas_limit		            max_size:32
+EthereumSignSubmitMultisigTx.multisig_address           max_size:20
+EthereumSignSubmitMultisigTx.to			                max_size:20
+EthereumSignSubmitMultisigTx.value			            max_size:32
+EthereumSignSubmitMultisigTx.data_initial_chunk	        max_size:1024
+EthereumSignSubmitMultisigTx.TOKENticker                max_size:32
+EthereumSignSubmitMultisigTx.TOKENsignedfortickerhash   max_size:64
+
+EthereumSignConfirmMultisigTx.address_n		            max_count:8
+EthereumSignConfirmMultisigTx.nonce			            max_size:32
+EthereumSignConfirmMultisigTx.gas_price		            max_size:32
+EthereumSignConfirmMultisigTx.gas_limit		            max_size:32

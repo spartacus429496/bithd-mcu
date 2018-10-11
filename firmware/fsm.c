@@ -537,6 +537,33 @@ void fsm_msgEthereumSignTx(EthereumSignTx *msg)
 	ethereum_signing_init(msg, node);
 }
 
+void fsm_msgEthereumSignGenerateMultisigContract(EthereumSignGenerateMultisigContract *msg)
+{
+	CHECK_INITIALIZED
+	
+	CHECK_PIN
+
+	const HDNode *node = fsm_getDerivedNode(SECP256K1_NAME, msg->address_n, msg->address_n_count);
+	if (!node) return;
+	
+	ethereum_generate_multisig_signing_init(msg, node);
+}
+
+void fsm_msgEthereumSignSubmitMultisigTx(EthereumSignSubmitMultisigTx *msg)
+{
+	if (msg->address_n_count < 8) 
+	{
+		fsm_sendFailure(FailureType_Failure_ActionCancelled, "ethereum sign submit multisig tx.");
+	}
+}
+
+void fsm_msgEthereumSignConfirmMultisigTx(EthereumSignConfirmMultisigTx *msg)
+{
+	if (msg->address_n_count < 8) 
+	{
+		fsm_sendFailure(FailureType_Failure_ActionCancelled, "ethereum sign confirm mulitisig tx.");
+	}
+}
 void fsm_msgEOSTxAck(EOSTxAck *msg)
 {
 	CHECK_PARAM(msg->has_data, _("No transaction provided"));

@@ -65,6 +65,9 @@ void fsm_msgEthereumSignTx(EthereumSignTx *msg);
 void fsm_msgEthereumTxAck(EthereumTxAck *msg);
 void fsm_msgEthereumSignMessage(EthereumSignMessage *msg);
 void fsm_msgEthereumVerifyMessage(EthereumVerifyMessage *msg);
+void fsm_msgEthereumSignGenerateMultisigContract(EthereumSignGenerateMultisigContract *msg);
+void fsm_msgEthereumSignSubmitMultisigTx(EthereumSignSubmitMultisigTx *msg); 
+void fsm_msgEthereumSignConfirmMultisigTx(EthereumSignConfirmMultisigTx *msg); 
 void fsm_msgEOSSignTx(EOSSignTx *msg);
 void fsm_msgEOSTxAck(EOSTxAck *msg);
 

@@ -259,12 +259,6 @@ static void ethereumFormatAmount(const bignum256 *amnt,TokenType *token, char *b
 	bn_format(amnt, NULL, suffix, decimals, 0, false, buf, buflen);
 }
 
-// static void layoutEthereumConfirmGenerateMultisig()
-// {
-// 	int i = 0;
-// 	return i;
-// }
-
 // static void layoutEthereumConfirmSubmitMultisigTx()
 // {
 // 	int i = 0;
@@ -408,39 +402,6 @@ static void layoutEthereumFee(const uint8_t *value, uint32_t value_len,
 	);
 }
 
-static void layoutCreateMultisigWalletFee(const uint8_t *gas_price, uint32_t gas_price_len,
-							  const uint8_t *gas_limit, uint32_t gas_limit_len)
-{
-	bignum256 val, gas;
-	uint8_t pad_val[32];
-	char tx_value[32];
-	char gas_value[32];
-
-	memset(pad_val, 0, sizeof(pad_val));
-	memcpy(pad_val + (32 - gas_price_len), gas_price, gas_price_len);
-	bn_read_be(pad_val, &val);
-
-	memset(pad_val, 0, sizeof(pad_val));
-	memcpy(pad_val + (32 - gas_limit_len), gas_limit, gas_limit_len);
-	bn_read_be(pad_val, &gas);
-	bn_multiply(&val, &gas, &secp256k1.prime);
-
-	ethereumFormatAmount(&gas, NULL, gas_value, sizeof(gas_value));
-	strcpy(tx_value,  _("Multisig Wallet"));
-	layoutDialogSwipe(&bmp_icon_question,
-		_("Cancel"),
-		_("Confirm"),
-		NULL,
-		_("Really Create"),
-		tx_value,
-		_("paying up to"),
-		gas_value,
-		_("for gas?"),
-		NULL
-	);
-}
-
-
 /*
  * RLP fields:
  * - nonce (0 .. 32)
@@ -508,6 +469,98 @@ int signatures_ok_Alltoken(EthereumSignTx *msg)
 }
 
 /**********************************/
+static void layoutCreateMultisigWalletFee(const uint8_t *gas_price, uint32_t gas_price_len,
+							  const uint8_t *gas_limit, uint32_t gas_limit_len)
+{
+	bignum256 val, gas;
+	uint8_t pad_val[32];
+	char tx_value[32];
+	char gas_value[32];
+
+	memset(pad_val, 0, sizeof(pad_val));
+	memcpy(pad_val + (32 - gas_price_len), gas_price, gas_price_len);
+	bn_read_be(pad_val, &val);
+
+	memset(pad_val, 0, sizeof(pad_val));
+	memcpy(pad_val + (32 - gas_limit_len), gas_limit, gas_limit_len);
+	bn_read_be(pad_val, &gas);
+	bn_multiply(&val, &gas, &secp256k1.prime);
+
+	ethereumFormatAmount(&gas, NULL, gas_value, sizeof(gas_value));
+	strcpy(tx_value,  _("Multisig Wallet"));
+	layoutDialogSwipe(
+		&bmp_icon_question,
+		_("Cancel"),
+		_("Confirm"),
+		NULL,
+		_("Really Create"),
+		tx_value,
+		_("paying up to"),
+		gas_value,
+		_("for gas?"),
+		NULL
+	);
+}
+
+static void layoutEthereumConfirmMultisigWalletType(const uint32_t owner_count, const uint32_t threshold)
+{
+	char type[] = "# of #";
+	type[0] = (uint8_t) (threshold + 48);
+	type[5] = (uint8_t) (owner_count + 48);
+	layoutDialogSwipe(
+		&bmp_icon_warning,
+		_("Cancel"),
+		_("Continue"),
+		NULL,
+		_("Multisig Wallet"),
+		_("Type:"),
+		NULL,
+		_(type), 
+		NULL,
+		NULL
+	);
+}
+
+static void layoutEthereumConfirmMultisigWalletOwner(const uint8_t *owner, uint8_t pos)
+{
+	char posstr[] = "### owner:";
+	posstr[0] = pos + 49;
+	if(pos == 0) {
+		posstr[1] = 's';
+		posstr[2] = 't';
+	} else if(pos == 1) {
+		posstr[1] = 'n';
+		posstr[2] = 'd';
+	} else if(pos == 2) {
+		posstr[1] = 'e';
+		posstr[2] = 'd';
+	} else {
+		posstr[1] = 't';
+		posstr[2] = 'h';
+	}
+	char ownerstr1[18];
+	char ownerstr1t[18];
+	char ownerstr2[18];
+	char ownerstr3[18];
+	data2hex(owner, 8, ownerstr1t);
+	memcpy(ownerstr1+2, ownerstr1t, 16);
+	ownerstr1[0] = '0';
+	ownerstr1[1] = 'x';
+	data2hex(owner+8, 9, ownerstr2);
+	data2hex(owner+17, 3, ownerstr3);
+	layoutDialogSwipe(
+		&bmp_icon_warning,
+		_("Cancel"),
+		_("Continue"),
+		NULL,
+		_("Multisig Wallet"),
+		_(posstr),
+		_(ownerstr1),
+		_(ownerstr2),
+		_(ownerstr3),
+		NULL
+	);
+}
 
 void ethereum_generate_multisig_signing_init(EthereumSignGenerateMultisigContract *msg, const HDNode *node)
 {
@@ -539,17 +592,26 @@ void ethereum_generate_multisig_signing_init(EthereumSignGenerateMultisigContrac
 		return;
 	}
 
-	// layoutEthereumConfirmGenerateMultisig();
-
+	layoutEthereumConfirmMultisigWalletType(msg->owners_count, msg->threshold);
 	if (!protectButton(ButtonRequestType_ButtonRequest_SignTx, false)) {
 		fsm_sendFailure(FailureType_Failure_ActionCancelled, NULL);
 		ethereum_signing_abort();
 		return;
 	}
 
+	for (size_t i = 0; i < msg->owners_count; i++) {
+		layoutEthereumConfirmMultisigWalletOwner(msg->owners[i].bytes, (uint8_t)i);
+		if (!protectButton(ButtonRequestType_ButtonRequest_SignTx, false)) {
+			fsm_sendFailure(FailureType_Failure_ActionCancelled, NULL);
+			ethereum_signing_abort();
+			return;
+		}
+	}
+
 	layoutCreateMultisigWalletFee(
 					  msg->gas_price.bytes, msg->gas_price.size,
 					  msg->gas_limit.bytes, msg->gas_limit.size);
+
 	if (!protectButton(ButtonRequestType_ButtonRequest_SignTx, false)) {
 		fsm_sendFailure(FailureType_Failure_ActionCancelled, NULL);
 		ethereum_signing_abort();

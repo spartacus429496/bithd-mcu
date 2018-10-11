@@ -5,3 +5,5 @@
 *.pyc
 messages_map.h
 __pycache__/
+bithd-java/*
+bithd-swift/*

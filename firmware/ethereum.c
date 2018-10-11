@@ -33,6 +33,7 @@
 #include "util.h"
 #include "gettext.h"
 #include "ethereum_tokens.h"
+#include "eth_multisig_wallet.h"
 
 /* maximum supported chain id.  v must fit in an uint32_t. */
 #define MAX_CHAIN_ID 2147483630
@@ -44,6 +45,8 @@ static CONFIDENTIAL uint8_t privkey[32];
 static uint32_t chain_id;
 struct SHA3_CTX keccak_ctx;
 
+static uint8_t multisig_threshold = 0;
+static uint8_t multisig_owner_count = 0;
 static inline void hash_data(const uint8_t *buf, size_t size)
 {
 	sha3_Update(&keccak_ctx, buf, size);
@@ -256,6 +259,24 @@ static void ethereumFormatAmount(const bignum256 *amnt,TokenType *token, char *b
 	bn_format(amnt, NULL, suffix, decimals, 0, false, buf, buflen);
 }
 
+// static void layoutEthereumConfirmGenerateMultisig()
+// {
+// 	int i = 0;
+// 	return i;
+// }
+
+// static void layoutEthereumConfirmSubmitMultisigTx()
+// {
+// 	int i = 0;
+// 	return i;
+// }
+
+// static void layoutEthereumConfirmConfirmMultisigTx()
+// {
+// 	int i = 0;
+// 	return i;
+// }
+
 static void layoutEthereumConfirmTx(const uint8_t *to, uint32_t to_len, const uint8_t *value, uint32_t value_len, TokenType *token)
 {
 	bignum256 val;
@@ -387,6 +408,39 @@ static void layoutEthereumFee(const uint8_t *value, uint32_t value_len,
 	);
 }
 
+static void layoutCreateMultisigWalletFee(const uint8_t *gas_price, uint32_t gas_price_len,
+							  const uint8_t *gas_limit, uint32_t gas_limit_len)
+{
+	bignum256 val, gas;
+	uint8_t pad_val[32];
+	char tx_value[32];
+	char gas_value[32];
+
+	memset(pad_val, 0, sizeof(pad_val));
+	memcpy(pad_val + (32 - gas_price_len), gas_price, gas_price_len);
+	bn_read_be(pad_val, &val);
+
+	memset(pad_val, 0, sizeof(pad_val));
+	memcpy(pad_val + (32 - gas_limit_len), gas_limit, gas_limit_len);
+	bn_read_be(pad_val, &gas);
+	bn_multiply(&val, &gas, &secp256k1.prime);
+
+	ethereumFormatAmount(&gas, NULL, gas_value, sizeof(gas_value));
+	strcpy(tx_value,  _("Multisig Wallet"));
+	layoutDialogSwipe(&bmp_icon_question,
+		_("Cancel"),
+		_("Confirm"),
+		NULL,
+		_("Really Create"),
+		tx_value,
+		_("paying up to"),
+		gas_value,
+		_("for gas?"),
+		NULL
+	);
+}
+
+
 /*
  * RLP fields:
  * - nonce (0 .. 32)
@@ -421,6 +475,11 @@ static bool ethereum_signing_check(EthereumSignTx *msg)
 	return true;
 }
 
+static bool ethereum_generate_multisig_signing_check(EthereumSignGenerateMultisigContract *msg) 
+{
+	return msg->owners_count > 0;	
+}
+
 /***********************************/
 static const uint8_t *pubkeytoken[5] = {
 (uint8_t *)"\x04\xCF\x97\xF4\x76\xD5\x84\xDD\x2C\x0F\x61\x32\x15\x99\xF1\x62\x0C\xF4\xF1\x1A\xF4\xCF\x6E\x0F\xBD\x17\x24\xA1\x60\x8C\x48\x99\xDA\x6A\xA7\xC4\x51\xC2\xF8\xAE\x3F\xEE\x92\x48\x89\xF2\x84\xAC\x48\x52\xEA\xAD\xC6\x44\xFA\x9B\x98\x8E\xD2\xD3\xD1\x31\x85\xD6\xF6",
@@ -450,6 +509,109 @@ int signatures_ok_Alltoken(EthereumSignTx *msg)
 
 /**********************************/
 
+void ethereum_generate_multisig_signing_init(EthereumSignGenerateMultisigContract *msg, const HDNode *node)
+{
+	if (msg->owners_count < 2 || msg->owners_count > 50) {
+		fsm_sendFailure(FailureType_Failure_DataError, _("owners count error."));
+		return;
+	}
+	for (size_t i = 0; i < msg->owners_count; i++) {
+		if (msg->owners[i].size != 20) {
+			fsm_sendFailure(FailureType_Failure_DataError, _("owner address error."));
+			return;
+		}
+	}
+	if (msg->threshold > msg->owners_count || msg->threshold < 1) {
+		fsm_sendFailure(FailureType_Failure_DataError, _("threshold error."));
+		return;
+	}
+
+	ethereum_signing = true;
+	sha3_256_Init(&keccak_ctx);
+
+	memset(&msg_tx_request, 0, sizeof(EthereumTxRequest));
+	chain_id = 1;
+
+	// safety checks
+	if (!ethereum_generate_multisig_signing_check(msg)) {
+		fsm_sendFailure(FailureType_Failure_DataError, _("Safety check failed"));
+		ethereum_signing_abort();
+		return;
+	}
+
+	// layoutEthereumConfirmGenerateMultisig();
+
+	if (!protectButton(ButtonRequestType_ButtonRequest_SignTx, false)) {
+		fsm_sendFailure(FailureType_Failure_ActionCancelled, NULL);
+		ethereum_signing_abort();
+		return;
+	}
+
+	layoutCreateMultisigWalletFee(
+					  msg->gas_price.bytes, msg->gas_price.size,
+					  msg->gas_limit.bytes, msg->gas_limit.size);
+	if (!protectButton(ButtonRequestType_ButtonRequest_SignTx, false)) {
+		fsm_sendFailure(FailureType_Failure_ActionCancelled, NULL);
+		ethereum_signing_abort();
+		return;
+	}
+
+	data_total = ETH_MULTISIG_CONTRACT_LENGTH + ((3 + msg->owners_count) * 32);
+
+	/* Stage 1: Calculate total RLP length */
+	// uint32_t rlp_length = 0;
+
+	layoutProgress(_("Signing"), 0);
+	uint32_t rlp_length = 0;
+	rlp_length += rlp_calculate_length(msg->nonce.size, msg->nonce.bytes[0]); // nonce
+	rlp_length += rlp_calculate_length(msg->gas_price.size, msg->gas_price.bytes[0]); // price
+	rlp_length += rlp_calculate_length(msg->gas_limit.size, msg->gas_limit.bytes[0]); // limit
+	rlp_length += rlp_calculate_length(0, 0); // to
+	rlp_length += rlp_calculate_length(0, 0); // value
+	rlp_length += rlp_calculate_length(data_total, multisig_wallet_contract[0]);
+	if (chain_id) {
+		rlp_length += rlp_calculate_length(1, chain_id);
+		rlp_length += rlp_calculate_length(0, 0);
+		rlp_length += rlp_calculate_length(0, 0);
+	}
+
+	/* Stage 2: Store header fields */
+	hash_rlp_list_length(rlp_length);
+
+	layoutProgress(_("Signing"), 100);
+
+	hash_rlp_field(msg->nonce.bytes, msg->nonce.size);
+	hash_rlp_field(msg->gas_price.bytes, msg->gas_price.size);
+	hash_rlp_field(msg->gas_limit.bytes, msg->gas_limit.size);
+	hash_rlp_field(0, 0);
+	hash_rlp_field(0, 0);
+	// multisig contract
+	hash_rlp_length(data_total, multisig_wallet_contract[0]);
+	for (int i=0; i<ETH_MULTISIG_CONTRACT_LENGTH; ){
+		int next = i + 1024;
+		if (next < ETH_MULTISIG_CONTRACT_LENGTH) {
+			hash_data(multisig_wallet_contract + i, 1024);
+		} else {
+			hash_data(multisig_wallet_contract + i, ETH_MULTISIG_CONTRACT_LENGTH - i);
+		}
+		i = next;
+	}
+	// multisig contract params
+	hash_data(params_start, 63);
+	multisig_threshold = (uint8_t)msg->threshold;
+	hash_data(&multisig_threshold, 1);
+	hash_data(length_start, 31);
+	multisig_owner_count = (uint8_t)msg->owners_count;
+	hash_data(&multisig_owner_count, 1);
+	for (size_t i = 0; i < msg->owners_count; i ++ ) {
+		hash_data(address_start, 12);
+		hash_data(msg->owners[i].bytes, 20);
+	}
+
+	memcpy(privkey, node->private_key, 32);
+
+	send_signature();
+}
 
 void ethereum_signing_init(EthereumSignTx *msg, const HDNode *node)
 {

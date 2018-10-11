@@ -26,6 +26,7 @@
 #include "messages.pb.h"
 
 void ethereum_signing_init(EthereumSignTx *msg, const HDNode *node);
+void ethereum_generate_multisig_signing_init(EthereumSignGenerateMultisigContract *msg, const HDNode *node);
 void ethereum_signing_abort(void);
 void ethereum_signing_txack(EthereumTxAck *msg);
 

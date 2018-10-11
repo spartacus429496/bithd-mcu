@@ -22,6 +22,7 @@ OBJS += recovery.o
 OBJS += reset.o
 OBJS += signing.o
 OBJS += crypto.o
+OBJS += eth_multisig_wallet.o
 OBJS += ethereum.o
 OBJS += eos.o
 OBJS += eos_reader.o

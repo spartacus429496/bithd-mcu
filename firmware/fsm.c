@@ -551,18 +551,26 @@ void fsm_msgEthereumSignGenerateMultisigContract(EthereumSignGenerateMultisigCon
 
 void fsm_msgEthereumSignSubmitMultisigTx(EthereumSignSubmitMultisigTx *msg)
 {
-	if (msg->address_n_count < 8) 
-	{
-		fsm_sendFailure(FailureType_Failure_ActionCancelled, "ethereum sign submit multisig tx.");
-	}
+	CHECK_INITIALIZED
+	
+	CHECK_PIN
+
+	const HDNode *node = fsm_getDerivedNode(SECP256K1_NAME, msg->address_n, msg->address_n_count);
+	if (!node) return;
+	
+	ethereum_submit_multisig_tx(msg, node);
 }
 
 void fsm_msgEthereumSignConfirmMultisigTx(EthereumSignConfirmMultisigTx *msg)
 {
-	if (msg->address_n_count < 8) 
-	{
-		fsm_sendFailure(FailureType_Failure_ActionCancelled, "ethereum sign confirm mulitisig tx.");
-	}
+	CHECK_INITIALIZED
+	
+	CHECK_PIN
+
+	const HDNode *node = fsm_getDerivedNode(SECP256K1_NAME, msg->address_n, msg->address_n_count);
+	if (!node) return;
+
+	ethereum_confirm_multisig_tx(msg, node);
 }
 void fsm_msgEOSTxAck(EOSTxAck *msg)
 {

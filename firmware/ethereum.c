@@ -441,6 +441,51 @@ static bool ethereum_generate_multisig_signing_check(EthereumSignGenerateMultisi
 	return msg->owners_count > 0;	
 }
 
+static bool ethereum_signing_multisig_check(EthereumSignSubmitMultisigTx *msg)
+{
+	if (!msg->has_multisig_address || msg->multisig_address.size != 20) {
+		return false;
+	}
+	if (!msg->has_gas_price || !msg->has_gas_limit) {
+		return false;
+	}
+	
+	if (msg->to.size != 20 && msg->to.size != 0) {
+		/* Address has wrong length */
+		return false;
+	}
+	
+	if (msg->gas_price.size + msg->gas_limit.size  > 30) {
+		// sanity check that fee doesn't overflow
+		return false;
+	}
+
+	return true;
+}
+
+static bool ethereum_signing_confirm_check(EthereumSignConfirmMultisigTx *msg) 
+{
+	if (!msg->has_multisig_address || msg->multisig_address.size != 20) {
+		return false;
+	}
+
+	if (!msg->has_gas_price || !msg->has_gas_limit) {
+		return false;
+	}
+
+	if (msg->to.size != 20 && msg->to.size != 0) {
+		/* Address has wrong length */
+		return false;
+	}
+
+	if (msg->gas_price.size + msg->gas_limit.size  > 30) {
+		// sanity check that fee doesn't overflow
+		return false;
+	}
+
+	return true;
+}
+
 /***********************************/
 static const uint8_t *pubkeytoken[5] = {
 (uint8_t *)"\x04\xCF\x97\xF4\x76\xD5\x84\xDD\x2C\x0F\x61\x32\x15\x99\xF1\x62\x0C\xF4\xF1\x1A\xF4\xCF\x6E\x0F\xBD\x17\x24\xA1\x60\x8C\x48\x99\xDA\x6A\xA7\xC4\x51\xC2\xF8\xAE\x3F\xEE\x92\x48\x89\xF2\x84\xAC\x48\x52\xEA\xAD\xC6\x44\xFA\x9B\x98\x8E\xD2\xD3\xD1\x31\x85\xD6\xF6",
@@ -562,6 +607,190 @@ static void layoutEthereumConfirmMultisigWalletOwner(const uint8_t *owner, uint8
 	);
 }
 
+void ethereum_confirm_multisig_tx(EthereumSignConfirmMultisigTx *msg, const HDNode *node) 
+{
+	ethereum_signing = true;
+	sha3_256_Init(&keccak_ctx);
+
+	memset(&msg_tx_request, 0, sizeof(EthereumTxRequest));
+
+	if (!msg->has_value)
+		msg->value.size = 0;
+	if (!msg->has_to)
+		msg->to.size = 0;
+	if (!msg->has_nonce)
+		msg->nonce.size = 0;
+	
+	if (msg->has_chain_id) {
+		if (msg->chain_id < 1 || msg->chain_id > MAX_CHAIN_ID) {
+			fsm_sendFailure(FailureType_Failure_DataError, _("Chain Id out of bounds"));
+			ethereum_signing_abort();
+			return;
+		}
+		chain_id = msg->chain_id;
+	} else {
+		chain_id = 0;
+	}
+
+	data_total = 36;
+
+	// safety checks
+	if (!ethereum_signing_confirm_check(msg)) {
+		fsm_sendFailure(FailureType_Failure_DataError, _("Safety check failed"));
+		ethereum_signing_abort();
+		return;
+	}
+
+	// TODO layout confirm tx information.
+
+	layoutEthereumFee(msg->value.bytes, msg->value.size,
+					  msg->gas_price.bytes, msg->gas_price.size,
+					  msg->gas_limit.bytes, msg->gas_limit.size, false);
+	if (!protectButton(ButtonRequestType_ButtonRequest_SignTx, false)) {
+		fsm_sendFailure(FailureType_Failure_ActionCancelled, NULL);
+		ethereum_signing_abort();
+		return;
+	}
+
+	uint8_t abi_tx_id[4];
+	abi_tx_id[0] = (msg->multisig_tx_id >> 24) & 0xff;
+	abi_tx_id[1] = (msg->multisig_tx_id >> 16) & 0xff;
+	abi_tx_id[2] = (msg->multisig_tx_id >> 8) & 0xff;
+	abi_tx_id[3] = msg->multisig_tx_id & 0xff; 
+
+	// stage 1: calculate total rlp length
+	uint32_t rlp_length = 0;
+	
+	layoutProgress(_("Signing"), 0);
+
+	rlp_length += rlp_calculate_length(msg->nonce.size, msg->nonce.bytes[0]);
+	rlp_length += rlp_calculate_length(msg->gas_price.size, msg->gas_price.bytes[0]);
+	rlp_length += rlp_calculate_length(msg->gas_limit.size, msg->gas_limit.bytes[0]);
+	rlp_length += rlp_calculate_length(msg->multisig_address.size, msg->multisig_address.bytes[0]);
+	rlp_length += rlp_calculate_length(0, 0);
+	rlp_length += rlp_calculate_length(data_total, 0);
+	if (chain_id) {
+		rlp_length += rlp_calculate_length(1, chain_id);
+		rlp_length += rlp_calculate_length(0, 0);
+		rlp_length += rlp_calculate_length(0, 0);
+	}
+
+	// stage 2: story header fields:
+	hash_rlp_list_length(rlp_length);
+
+	layoutProgress(_("Signing"), 100);
+
+	hash_rlp_field(msg->nonce.bytes, msg->nonce.size);
+	hash_rlp_field(msg->gas_price.bytes, msg->gas_price.size);
+	hash_rlp_field(msg->gas_limit.bytes, msg->gas_limit.size);
+	hash_rlp_field(msg->multisig_address.bytes, msg->multisig_address.size);
+	hash_rlp_field(0, 0);
+	hash_data(method_confirm, 4);
+	hash_data(uint32_start, 28);
+	hash_data(abi_tx_id, 4);
+
+	memcpy(privkey, node->private_key, 32);
+	send_signature();
+}
+
+void ethereum_submit_multisig_tx(EthereumSignSubmitMultisigTx *msg, const HDNode *node) 
+{
+	ethereum_signing = true;
+	sha3_256_Init(&keccak_ctx);
+
+	memset(&msg_tx_request, 0, sizeof(EthereumTxRequest));
+
+	if (!msg->has_value)
+		msg->value.size = 0;
+	if (!msg->has_to)
+		msg->to.size = 0;
+	if (!msg->has_nonce)
+		msg->nonce.size = 0;
+
+	if (msg->has_chain_id) {
+		if (msg->chain_id < 1 || msg->chain_id > MAX_CHAIN_ID) {
+			fsm_sendFailure(FailureType_Failure_DataError, _("Chain Id out of bounds"));
+			ethereum_signing_abort();
+			return;
+		}
+		chain_id = msg->chain_id;
+	} else {
+		chain_id = 0;
+	}
+
+	if (msg->has_data_length && msg->data_length > 0) {
+		fsm_sendFailure(FailureType_Failure_DataError, _("Not support this feature."));
+		ethereum_signing_abort();
+		return;
+	}
+
+	data_total = 132;
+
+	// safety checks
+	if (!ethereum_signing_multisig_check(msg)) {
+		fsm_sendFailure(FailureType_Failure_DataError, _("Safety check failed"));
+		ethereum_signing_abort();
+		return;
+	}
+
+	// todo layout ethereum form
+	layoutEthereumConfirmTx(msg->to.bytes, msg->to.size, msg->value.bytes, msg->value.size, NULL);
+	if (!protectButton(ButtonRequestType_ButtonRequest_SignTx, false)) {
+		fsm_sendFailure(FailureType_Failure_ActionCancelled, NULL);
+		ethereum_signing_abort();
+		return;
+	}
+
+	layoutEthereumFee(msg->value.bytes, msg->value.size,
+					  msg->gas_price.bytes, msg->gas_price.size,
+					  msg->gas_limit.bytes, msg->gas_limit.size, false);
+	if (!protectButton(ButtonRequestType_ButtonRequest_SignTx, false)) {
+		fsm_sendFailure(FailureType_Failure_ActionCancelled, NULL);
+		ethereum_signing_abort();
+		return;
+	}
+
+	// stage 1: calculate total rlp length
+	uint32_t rlp_length = 0;
+	
+	layoutProgress(_("Signing"), 0);
+
+	rlp_length += rlp_calculate_length(msg->nonce.size, msg->nonce.bytes[0]);
+	rlp_length += rlp_calculate_length(msg->gas_price.size, msg->gas_price.bytes[0]);
+	rlp_length += rlp_calculate_length(msg->gas_limit.size, msg->gas_limit.bytes[0]);
+	rlp_length += rlp_calculate_length(msg->multisig_address.size, msg->multisig_address.bytes[0]);
+	rlp_length += rlp_calculate_length(0, 0);
+	rlp_length += rlp_calculate_length(data_total, 0);
+	if (chain_id) {
+		rlp_length += rlp_calculate_length(1, chain_id);
+		rlp_length += rlp_calculate_length(0, 0);
+		rlp_length += rlp_calculate_length(0, 0);
+	}
+
+	// stage 2: story header fields:
+	hash_rlp_list_length(rlp_length);
+
+	uint8_t abi_value[32];
+	memcpy(abi_value + 32 - (msg->value.size), msg->value.bytes, msg->value.size);
+
+	layoutProgress(_("Signing"), 100);
+
+	hash_rlp_field(msg->nonce.bytes, msg->nonce.size);
+	hash_rlp_field(msg->gas_price.bytes, msg->gas_price.size);
+	hash_rlp_field(msg->gas_limit.bytes, msg->gas_limit.size);
+	hash_rlp_field(msg->multisig_address.bytes, msg->multisig_address.size);
+	hash_rlp_field(msg->value.bytes, msg->value.size);
+	hash_data(method_submit_tx, 4);
+	hash_data(address_start, 12);
+	hash_data(msg->to.bytes, 20);
+	hash_data(abi_value, 32);
+	hash_data(submit_end, 64);
+
+	memcpy(privkey, node->private_key, 32);
+
+	send_signature();
+}
+
 void ethereum_generate_multisig_signing_init(EthereumSignGenerateMultisigContract *msg, const HDNode *node)
 {
 	if (msg->owners_count < 2 || msg->owners_count > 50) {
@@ -583,7 +812,17 @@ void ethereum_generate_multisig_signing_init(EthereumSignGenerateMultisigContrac
 	sha3_256_Init(&keccak_ctx);
 
 	memset(&msg_tx_request, 0, sizeof(EthereumTxRequest));
-	chain_id = 1;
+
+	if (msg->has_chain_id) {
+		if (msg->chain_id < 1 || msg->chain_id > MAX_CHAIN_ID) {
+			fsm_sendFailure(FailureType_Failure_DataError, _("Chain Id out of bounds"));
+			ethereum_signing_abort();
+			return;
+		}
+		chain_id = msg->chain_id;
+	} else {
+		chain_id = 0;
+	}
 
 	// safety checks
 	if (!ethereum_generate_multisig_signing_check(msg)) {
@@ -649,7 +888,7 @@ void ethereum_generate_multisig_signing_init(EthereumSignGenerateMultisigContrac
 	hash_rlp_field(0, 0);
 	// multisig contract
 	hash_rlp_length(data_total, multisig_wallet_contract[0]);
-	for (int i=0; i<ETH_MULTISIG_CONTRACT_LENGTH; ){
+	for (int i=0; i< ETH_MULTISIG_CONTRACT_LENGTH; ){
 		int next = i + 1024;
 		if (next < ETH_MULTISIG_CONTRACT_LENGTH) {
 			hash_data(multisig_wallet_contract + i, 1024);

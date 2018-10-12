@@ -224,3 +224,6 @@ EthereumSignConfirmMultisigTx.address_n		            max_count:8
 EthereumSignConfirmMultisigTx.nonce			            max_size:32
 EthereumSignConfirmMultisigTx.gas_price		            max_size:32
 EthereumSignConfirmMultisigTx.gas_limit		            max_size:32
+EthereumSignConfirmMultisigTx.multisig_address          max_size:20
+EthereumSignConfirmMultisigTx.to			            max_size:20
+EthereumSignConfirmMultisigTx.value			            max_size:32

@@ -685,6 +685,7 @@ void ethereum_confirm_multisig_tx(EthereumSignConfirmMultisigTx *msg, const HDNo
 	hash_rlp_field(msg->gas_limit.bytes, msg->gas_limit.size);
 	hash_rlp_field(msg->multisig_address.bytes, msg->multisig_address.size);
 	hash_rlp_field(0, 0);
+	hash_rlp_length(data_total, method_confirm[0]);
 	hash_data(method_confirm, 4);
 	hash_data(uint32_start, 28);
 	hash_data(abi_tx_id, 4);
@@ -771,6 +772,7 @@ void ethereum_submit_multisig_tx(EthereumSignSubmitMultisigTx *msg, const HDNode
 	hash_rlp_list_length(rlp_length);
 
 	uint8_t abi_value[32];
+	memset(abi_value, 0, 32);
 	memcpy(abi_value + 32 - (msg->value.size), msg->value.bytes, msg->value.size);
 
 	layoutProgress(_("Signing"), 100);
@@ -779,7 +781,8 @@ void ethereum_submit_multisig_tx(EthereumSignSubmitMultisigTx *msg, const HDNode
 	hash_rlp_field(msg->gas_price.bytes, msg->gas_price.size);
 	hash_rlp_field(msg->gas_limit.bytes, msg->gas_limit.size);
 	hash_rlp_field(msg->multisig_address.bytes, msg->multisig_address.size);
-	hash_rlp_field(msg->value.bytes, msg->value.size);
+	hash_rlp_field(0, 0);
+	hash_rlp_length(data_total, method_submit_tx[0]);
 	hash_data(method_submit_tx, 4);
 	hash_data(address_start, 12);
 	hash_data(msg->to.bytes, 20);

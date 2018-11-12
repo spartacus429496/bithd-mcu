@@ -1,77 +1,92 @@
 #include "eos_reader.h"
 
-static uint8_t *_buf;
-static int _index;
-static int _length;
-
-int check_available(int num) 
+int check_available(EosReaderCTX* reader_ctx, int num) 
 {
-    return _length - _index > num;
+    return reader_ctx->_length - reader_ctx->_index > num;
 }
 
-void reader_init(uint8_t * buf, int len) 
+void reader_init(EosReaderCTX* reader_ctx, uint8_t * buf, int len) 
 {
-    _buf = buf;
-    _index = 0;
-    _length = len;
+    reader_ctx->_buf = buf;
+    reader_ctx->_index = 0;
+    reader_ctx->_length = len;
 }
 
-void reader_get(uint8_t * b) 
+int reader_get(EosReaderCTX* reader_ctx, uint8_t * b) 
 {
-    if(check_available(1)) {
-        *b = _buf[_index++];
+    if(check_available(reader_ctx, 1)) {
+        *b = reader_ctx->_buf[reader_ctx->_index++];
+        return SUCCESS;
     }
+    return FAILED;
 }
 
 
-void reader_get_short(uint16_t * s)
+int reader_get_short(EosReaderCTX* reader_ctx, uint16_t * s)
 {
-    if(check_available(2)){
-        *s = (((_buf[_index++] & 0xFF)) | ((_buf[_index++] & 0xFF) << 8)) & 0xFFFF;
+    if(check_available(reader_ctx, 2)){
+        *s = (((reader_ctx->_buf[reader_ctx->_index++] & 0xFF)) 
+            | ((reader_ctx->_buf[reader_ctx->_index++] & 0xFF) << 8)) 
+            & 0xFFFF;
+        return SUCCESS;
     }
+    return FAILED;
 }
 
-void reader_get_int(uint32_t *i)
+int reader_get_int(EosReaderCTX* reader_ctx, uint32_t *i)
 {
-    if(check_available(4)){
-        *i = ((_buf[_index++] & 0xFF)) | ((_buf[_index++] & 0xFF) << 8) | ((_buf[_index++] & 0xFF) << 16)
-            | ((_buf[_index++] & 0xFF) << 24);
+    if(check_available(reader_ctx, 4)){
+        *i = (((reader_ctx->_buf[reader_ctx->_index++] & 0xFF)) 
+            | ((reader_ctx->_buf[reader_ctx->_index++] & 0xFF) << 8) 
+            | ((reader_ctx->_buf[reader_ctx->_index++] & 0xFF) << 16)
+            | ((reader_ctx->_buf[reader_ctx->_index++] & 0xFF) << 24))
+            & 0xFFFFFFFF;
+        return SUCCESS;
     }
+    return FAILED;
 }
 
-void reader_get_long(uint64_t *l)
+int reader_get_long(EosReaderCTX* reader_ctx, uint64_t *l)
 {
-    if(check_available(8)){
-        *l = ((_buf[_index++] & 0xFFL)) | ((uint64_t)(_buf[_index++] & 0xFFL) << 8) | ((uint64_t)(_buf[_index++] & 0xFFL) << 16)
-            | ((uint64_t)(_buf[_index++] & 0xFFL) << 24) | ((uint64_t)(_buf[_index++] & 0xFFL) << 32) | ((uint64_t)(_buf[_index++] & 0xFFL) << 40)
-            | ((uint64_t)(_buf[_index++] & 0xFFL) << 48) | ((uint64_t)(_buf[_index++] & 0xFFL) << 56);
+    if(check_available(reader_ctx, 8)){
+        *l = (((uint64_t)(reader_ctx->_buf[reader_ctx->_index++] & 0xFFL)) 
+            | (((uint64_t)reader_ctx->_buf[reader_ctx->_index++] & 0xFFL) << 8) 
+            | (((uint64_t)reader_ctx->_buf[reader_ctx->_index++] & 0xFFL) << 16)
+            | (((uint64_t)reader_ctx->_buf[reader_ctx->_index++] & 0xFFL) << 24) 
+            | (((uint64_t)reader_ctx->_buf[reader_ctx->_index++] & 0xFFL) << 32) 
+            | (((uint64_t)reader_ctx->_buf[reader_ctx->_index++] & 0xFFL) << 40)
+            | (((uint64_t)reader_ctx->_buf[reader_ctx->_index++] & 0xFFL) << 48) 
+            | (((uint64_t)reader_ctx->_buf[reader_ctx->_index++] & 0xFFL) << 56)) 
+            & 0xFFFFFFFFFFFFFFFF;
+        return SUCCESS;
     }
+    return FAILED;
 }
 
-void reader_get_bytes(uint8_t *bytes, size_t len) 
+int reader_get_bytes(EosReaderCTX* reader_ctx, uint8_t *bytes, size_t len) 
 {
-    if(check_available(len)) {
-        memcpy(bytes, _buf + _index, len);
-        _index += len;
+    if(check_available(reader_ctx, len)) {
+        memcpy(bytes, reader_ctx->_buf + reader_ctx->_index, len);
+        reader_ctx->_index += len;
+        return SUCCESS;
     }
+    return FAILED;
 }
 
-void reader_get_variable_uint(uint64_t *val)
+int reader_get_variable_uint(EosReaderCTX* reader_ctx, uint64_t *val)
 {
+    int i = 0;
     uint64_t v = 0;
-    uint8_t b=0, by = 0;
+    uint8_t b, by = 0;
     do {
-        reader_get(&b);
-        v |= ( b & 0x7F) << by;
-        by +=7;
-    }
-    while ( (b & 0x80) != 0 );
+        if (reader_get(reader_ctx, &b)) {
+            v |= ( b & 0x7F) << by;
+            by +=7;
+            i ++;
+        } else {
+            break;
+        }
+    } while ( (b & 0x80) != 0 );
     *val = v;
-}
-
-void reader_free(void) 
-{
-    // free(_buf);
-    _length = 0;
-    _index = 0;
+    return i > 0;
 }

@@ -1,5 +1,6 @@
 #include <string.h>
 #include "eos_packer.h"
+#include "eos_model.h"
 
 char CHAR_MAP[] = ".12345abcdefghijklmnopqrstuvwxyz";
 

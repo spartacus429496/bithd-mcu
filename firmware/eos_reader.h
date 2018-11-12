@@ -1,18 +1,30 @@
+#ifndef _EOS_READER_H_
+#define _EOS_READER_H_ 
 #include <stdint.h>
 #include <string.h>
 
-void reader_init(uint8_t *, int);
+#define SUCCESS 1
+#define FAILED  0
 
-void reader_get(uint8_t *);
+typedef struct eos_reader_ctx 
+{
+    uint8_t *_buf;
+    int _index;
+    int _length;
+} EosReaderCTX;
 
-void reader_get_short(uint16_t *);
+void reader_init(EosReaderCTX*, uint8_t *, int);
 
-void reader_get_int(uint32_t *);
+int reader_get(EosReaderCTX*, uint8_t *);
 
-void reader_get_long(uint64_t *);
+int reader_get_short(EosReaderCTX*, uint16_t *);
 
-void reader_get_bytes(uint8_t *, size_t);
+int reader_get_int(EosReaderCTX*, uint32_t *);
 
-void reader_get_variable_uint(uint64_t *);
+int reader_get_long(EosReaderCTX*, uint64_t *);
 
-void reader_free(void);
+int reader_get_bytes(EosReaderCTX*, uint8_t *, size_t);
+
+int reader_get_variable_uint(EosReaderCTX*, uint64_t *);
+
+#endif

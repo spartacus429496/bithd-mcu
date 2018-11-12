@@ -14,6 +14,10 @@
 #include "eos_packer.h"
 #include "eos_reader.h"
 #include "eos_writer.h"
+#include "eos_model.h"
+#include "eos_action_reader.h"
+#include "eos_action_data_reader.h"
+#include "eos_utils.h"
 #include  "uart.h"
 
 static bool eos_signing = false;
@@ -585,8 +589,127 @@ static void layoutEosProducerVote(uint8_t *data)
 	);
 }
 
+bool confirm_eosio_token_transfer(EosReaderCTX *ctx) 
+{
+	EosioTokenTransfer transfer;
+	reader_get_transfer(ctx, &transfer);
+
+	char _sending_desc[] = "Confirm sending";
+	char _send_value[] = "_____________________";
+	char _to_desc[] = "to:";
+	char _to[] = "______________________";
+
+	int _size = name_to_string(transfer.to, _to);
+	_to[_size] = '\0';
+
+	char quantity[40];
+	uint8_t qlen = format_asset(&transfer.quantity, quantity);
+	memcpy(_send_value, quantity, qlen);
+	_send_value[qlen] = '\0';
+
+	layoutDialogSwipe(
+		&bmp_icon_question,
+		_("Cancel"),
+		_("Confrim"),
+		NULL,
+		_sending_desc,
+		_send_value,
+		_to_desc,
+		_to,
+		NULL,
+		NULL
+	);
+	if (!protectButton(ButtonRequestType_ButtonRequest_SignTx, false)) {
+		return false;
+	}
+
+	char _really_send[] = "Really send: ";
+	char _from_desc[] = "pay account:";
+	char _from[] = "______________________";
+	_size = name_to_string(transfer.from, _from);
+	_from[_size] = '\0';
+
+	layoutDialogSwipe(
+		&bmp_icon_question,
+		_("Cancel"),
+		_("Confrim"),
+		NULL,
+		_really_send,
+		_send_value,
+		_from_desc,
+		_from,
+		NULL,
+		NULL
+	);
+	return protectButton(ButtonRequestType_ButtonRequest_SignTx, false); 
+}
+
 void eos_signing_init(EOSSignTx *msg, const HDNode *node)
 {
+	EosReaderCTX reader_ctx;
+	action_reader_init(&reader_ctx, msg->actions.bytes, msg->actions.size);
+	uint64_t action_count = action_reader_count(&reader_ctx);
+	for (uint8_t i=0; i < action_count; i ++) {
+		EosAction action;
+		action_reader_next(&reader_ctx, &action);
+		if (action.account == EOSIO) {
+			switch (action.name) 
+			{
+				case ACTION_NEW_ACCOUNT:
+				break;
+				case ACTION_BUY_RAM:
+				break;
+				case ACTION_SELL_RAM: 
+				break;
+				case ACTION_SELL_RAM_BYTES: 
+				break;
+				case ACTION_DELEGATE: 
+				break; 
+				case ACTION_UNDELEGATE: 
+				break;
+				case ACTION_VOTE_PRODUCER: 
+				break;
+				default:
+				break;
+			}
+			eos_signing_abort();
+		} else if (action.account == EOSIO_TOKEN) {
+			switch (action.name) 
+			{
+				case ACTION_TRANSMFER: 
+					if (!confirm_eosio_token_transfer(&reader_ctx)) {
+						fsm_sendFailure(FailureType_Failure_ActionCancelled, NULL);
+						eos_signing_abort();
+						return;	
+					}
+					break;
+				default: 
+				eos_signing_abort();
+				break;
+			}
+		} else if (action.account == EOSIO_MSIG) {
+			switch (action.name)
+			{
+				case ACTION_PROPOSE: 
+				break;
+				case ACTION_UNAPPROVE: 
+				break;
+				case ACTION_APPROVE: 
+				break;
+				case ACTION_CANCEL: 
+				break;
+				case ACTION_EXEC: 
+				break;
+				default:
+				break;
+			}
+			eos_signing_abort();
+		} else {
+			// other actions.
+			eos_signing_abort();
+		}
+	}
+	
 	uint64_t action_name=0;
 	uint8_t ret_vote=0;
 	uint8_t msgbuff[32];
@@ -605,22 +728,22 @@ void eos_signing_init(EOSSignTx *msg, const HDNode *node)
 
 	switch(action_name)
 	{
-		case EOS_ACTION_DELEGATE:
+		case ACTION_DELEGATE:
 			layoutEosconfirmTxDELEGATE(&msg->actions.bytes[34+num_bytes],len_sct);
 			break;
-		case EOS_ACTION_UNDELEGATE:
+		case ACTION_UNDELEGATE:
 			layoutEosconfirmTxUNDELEGATE(&msg->actions.bytes[34+num_bytes],len_sct);
 			break;
-		case EOS_ACTION_VOTE:
+		case ACTION_VOTE_PRODUCER:
 			ret_vote = layoutEosconfirmTxVOTE(&msg->actions.bytes[34+num_bytes],len_sct);
 			break;
-		case EOS_ACTION_TRANSMFER:
+		case ACTION_TRANSMFER:
 			layoutEosconfirmTxTRANSMFER(&msg->actions.bytes[34+num_bytes],len_sct);
 			break;
-		case EOS_ACTION_BUY_RAM:
+		case ACTION_BUY_RAM:
 			layoutEosconfirmTxBUY_RAM(&msg->actions.bytes[34+num_bytes],len_sct);
 			break;
-		case EOS_ACTION_SELL_RAM:
+		case ACTION_SELL_RAM:
 			layoutEosconfirmTxSELL_RAM(&msg->actions.bytes[34+num_bytes],len_sct);
 			break;
 		default:
@@ -688,6 +811,12 @@ void eos_signing_init(EOSSignTx *msg, const HDNode *node)
     send_signature();
 }
 
+// void eos_signing_init_2(EOSSignTx *msg, const HDNode *node)
+// {
+	
+//     memcpy(privkey, node->private_key, 32);
+//     send_signature();
+// }
 
 static void send_request_chunk(void)
 {

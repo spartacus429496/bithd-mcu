@@ -27,7 +27,6 @@ OBJS += ethereum.o
 OBJS += eos.o
 OBJS += eos_reader.o
 OBJS += eos_writer.o
-OBJS += eos_packer.o
 OBJS += eos_action_reader.o
 OBJS += eos_action_data_reader.o
 OBJS += eos_transaction_reader.o

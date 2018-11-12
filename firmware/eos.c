@@ -623,8 +623,8 @@ bool confirm_eosio_token_transfer(EosReaderCTX *ctx)
 		return false;
 	}
 
-	char _really_send[] = "Really send: ";
-	char _from_desc[] = "pay account:";
+	char _really_send[] = "Really send";
+	char _from_desc[] = "pay account";
 	char _from[] = "______________________";
 	_size = name_to_string(transfer.from, _from);
 	_from[_size] = '\0';
@@ -709,7 +709,7 @@ void eos_signing_init(EOSSignTx *msg, const HDNode *node)
 			eos_signing_abort();
 		}
 	}
-	
+
 	uint64_t action_name=0;
 	uint8_t ret_vote=0;
 	uint8_t msgbuff[32];

@@ -5,6 +5,10 @@
 
 uint8_t format_asset(EosTypeAsset *, char *);
 
+uint8_t format_producer(uint64_t, int, char *);
+
 void symbol_to_str(uint64_t, char *);
+
+int name_to_str(uint64_t, char*);
 
 #endif // _EOS_UTILS_H_

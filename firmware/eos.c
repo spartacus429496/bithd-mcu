@@ -589,10 +589,93 @@ static void layoutEosProducerVote(uint8_t *data)
 	);
 }
 
+bool confirm_eosio_vote_producer(EosReaderCTX *ctx)
+{
+	EosioVoteProducer vote_producer;
+	if (!reader_get_vote_producer(ctx, &vote_producer)) {
+		return false;
+	}
+
+	char _voting_desc[] = "Confirm voting";
+	char _producers[] = "producers:";
+	char _producer1[20]; 
+	char _producer2[20];
+	char _producer3[20];
+
+	char _next[] = _("Next");
+	char _confirm[] = _("Confirm");
+	char _cancel[] = _("Cancel");
+
+	uint8_t page_count = 0;
+
+	while (page_count < vote_producer.producer_size) {
+
+		memset(_producer1, 0, 20);
+		memset(_producer2, 0, 20);
+		memset(_producer3, 0, 20);	
+
+		uint8_t left_count = vote_producer.producer_size - page_count;
+		uint8_t page_size = left_count > 3? 3: left_count;
+		switch (page_size) 
+		{
+			case 3: 
+				format_producer(vote_producer.producers[page_count + 2], page_count + 3, _producer3);
+			case 2: 
+				format_producer(vote_producer.producers[page_count + 1], page_count + 2, _producer2);
+			case 1: 
+				format_producer(vote_producer.producers[page_count + 0], page_count + 1, _producer1);
+				break;
+		}
+
+		page_count += 3;
+
+		layoutDialogSwipe(
+			&bmp_icon_question,
+			_cancel,
+			page_count >= vote_producer.producer_size? _confirm: _next,
+			NULL,
+			_voting_desc,
+			_producers,
+			_producer1,
+			_producer2,
+			_producer3,
+			NULL
+		);
+
+		if (!protectButton(ButtonRequestType_ButtonRequest_SignTx, false)) {
+			return false;
+		}
+	}
+
+	char _relly_vote[] = "Relly vote for these";
+	char _relly_producers[] = "producers?";
+	char _voter[] = "voter:";
+	char voter[13];
+	int size = name_to_str(vote_producer.voter, voter);
+	voter[size] = '\0';
+
+	layoutDialogSwipe(
+		&bmp_icon_question,
+		_cancel,
+		_confirm,
+		NULL,
+		_relly_vote,
+		_relly_producers,
+		_voter,
+		voter,
+		NULL,
+		NULL
+	);
+
+	return protectButton(ButtonRequestType_ButtonRequest_SignTx, false);
+}
+
 bool confirm_eosio_token_transfer(EosReaderCTX *ctx) 
 {
 	EosioTokenTransfer transfer;
-	reader_get_transfer(ctx, &transfer);
+	if (!reader_get_transfer(ctx, &transfer)) {
+		return false;
+	}
 
 	char _sending_desc[] = "Confirm sending";
 	char _send_value[] = "_____________________";
@@ -647,7 +730,7 @@ bool confirm_eosio_token_transfer(EosReaderCTX *ctx)
 void eos_signing_init(EOSSignTx *msg, const HDNode *node)
 {
 	EosReaderCTX reader_ctx;
-	action_reader_init(&reader_ctx, msg->actions.bytes, msg->actions.size);
+	action_reader_init(&reader_ctx, msg->actions.bytes, msg->actions.size + 1);
 	uint64_t action_count = action_reader_count(&reader_ctx);
 	for (uint8_t i=0; i < action_count; i ++) {
 		EosAction action;
@@ -667,12 +750,16 @@ void eos_signing_init(EOSSignTx *msg, const HDNode *node)
 				break; 
 				case ACTION_UNDELEGATE: 
 				break;
-				case ACTION_VOTE_PRODUCER: 
-				break;
+				case ACTION_VOTE_PRODUCER:
+					if (!confirm_eosio_vote_producer(&reader_ctx)) {
+						fsm_sendFailure(FailureType_Failure_ActionCancelled, NULL);
+						eos_signing_abort();
+						return;		
+					}
+					break;
 				default:
 				break;
 			}
-			eos_signing_abort();
 		} else if (action.account == EOSIO_TOKEN) {
 			switch (action.name) 
 			{

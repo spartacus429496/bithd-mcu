@@ -1,3 +1,4 @@
+#include <stdio.h>
 #include "eos.h"
 #include "fsm.h"
 #include "layout2.h"
@@ -104,6 +105,189 @@ static void send_signature(void)
 	msg_write(MessageType_MessageType_EOSTxSignature, &msg_tx_request);
 
 	eos_signing_abort();
+}
+
+bool confirm_eosio_newaccount(EosReaderCTX *ctx)
+{
+	EosioNewAccount new_account;
+	if (!reader_get_newaccount(ctx, &new_account)) {
+		return false;
+	}
+
+	char _confirm[] = _("Confirm");
+	char _cancel[] = _("Cancel");
+
+	char _confirm_create_desc[] = "Confirm creating";
+	char _account[] = "account:";
+	char new_account_name[13];
+	memset(new_account_name, 0, 13);
+	int size = name_to_str(new_account.new_name, new_account_name);
+	new_account_name[size] = '\0';
+
+	layoutDialogSwipe(
+		&bmp_icon_question,
+		_cancel, _confirm, NULL,
+		_confirm_create_desc, _account, new_account_name, NULL, NULL, NULL
+	);
+
+	if (!protectButton(ButtonRequestType_ButtonRequest_SignTx, false)) {
+		return false;
+	}
+
+	uint16_t owner_count = new_account.owner.key_size + new_account.owner.permission_size;
+	uint16_t owner_weight = 0;
+	for (uint8_t i = 0; i < new_account.owner.key_size; i++ ) {
+		owner_weight += new_account.owner.keys[i].weight;
+	}
+	for (uint8_t i = 0; i < new_account.owner.permission_size; i++ ) {
+		owner_weight += new_account.owner.permissions[i].weight;
+	}
+	if (owner_count == 1 && (new_account.owner.keys[0].weight != owner_weight || new_account.owner.permissions[0].weight != owner_weight)) {
+		return false;
+	}
+
+	uint16_t active_count = new_account.active.key_size + new_account.active.permission_size;
+	uint16_t active_weight = 0;
+	for (uint8_t i = 0; i < new_account.active.key_size; i++ ) {
+		active_weight += new_account.active.keys[i].weight;
+	}
+	for (uint8_t i = 0; i < new_account.active.permission_size; i++ ) {
+		active_weight += new_account.active.permissions[i].weight;
+	}
+	if (active_count == 1 && (new_account.active.keys[0].weight != active_weight || new_account.active.permissions[0].weight != active_weight)) {
+		return false;
+	}
+
+	if (owner_count == 0 || active_count == 0) {
+		return false;
+	}
+
+	char _confirm_owner[] = "Confirm owner";
+	if (owner_count > 1) {
+		char _weight[20];
+		char _threshold[20];
+		size = sprintf(_weight, "weight: %u", owner_weight);
+		_weight[size] = '\0';
+		size = sprintf(_threshold, "throshold: %lu", new_account.owner.threshold);
+		_threshold[size] = '\0';
+
+		layoutDialogSwipe(
+			&bmp_icon_question,
+			_cancel, _confirm, NULL,
+			_confirm_owner, _weight, _threshold, NULL, NULL, NULL
+		);
+		if (!protectButton(ButtonRequestType_ButtonRequest_SignTx, false)) {
+			return false;
+		}
+	}
+	for (uint8_t i = 0; i < new_account.owner.key_size; i++ ) {
+		char _owner_public_keys[] = "Owner public keys";
+		char pubkey[60];
+		size = format_eos_pubkey(new_account.owner.keys[i].pubkey.pubkey, 33, i + 1, pubkey);
+		pubkey[size] = '\0';
+		char _pubkey1[20];
+		char _pubkey2[20];
+		char _pubkey3[20];
+		memcpy(_pubkey1, pubkey, 20);
+		memcpy(_pubkey2, pubkey + 20, 20);
+		memcpy(_pubkey3, pubkey + 40, 20);
+		char _weight[20];
+		size = sprintf(_weight, "weight: %u", new_account.owner.keys[i].weight);
+		_weight[size] = '\0';
+
+		layoutDialogSwipe(
+			&bmp_icon_question,
+			_cancel, _confirm, NULL,
+			_owner_public_keys, _pubkey1, _pubkey2, _pubkey3, _weight, NULL
+		);
+
+		if (!protectButton(ButtonRequestType_ButtonRequest_SignTx, false)) {
+			return false;
+		}
+	}
+
+ 	for (uint8_t i = 0; i < new_account.owner.permission_size; i ++ ) {
+		char _owner_account[] = "Owner accounts";
+		char _account_name[20];
+		char _permission[20];
+		char _weight[20];
+		size = format_producer(new_account.owner.permissions[i].permission.actor, i + 1, _account_name);
+		_account_name[size] = '\0';
+		size = sprintf(_weight, "weight: %u", new_account.owner.permissions[i].weight);
+		_weight[size] = '\0';
+		char per[13];
+		size = name_to_str(new_account.owner.permissions[i].permission.permission, per);
+		per[size] = '\0';
+		size = sprintf(_permission, "permission: %s", per);
+		layoutDialogSwipe(
+			&bmp_icon_question,
+			_cancel, _confirm, NULL,
+			_owner_account, _account_name, _permission, _weight, NULL, NULL
+		);
+		if (!protectButton(ButtonRequestType_ButtonRequest_SignTx, false)) {
+			return false;
+		}
+	 }
+
+	 for (uint8_t i = 0; i < new_account.active.key_size; i++ ) {
+		char _active_public_keys[] = "Active public keys";
+		char pubkey[60];
+		size = format_eos_pubkey(new_account.active.keys[i].pubkey.pubkey, 33, i + 1, pubkey);
+		pubkey[size] = '\0';
+		char _pubkey1[20];
+		char _pubkey2[20];
+		char _pubkey3[20];
+		memcpy(_pubkey1, pubkey, 20);
+		memcpy(_pubkey2, pubkey + 20, 20);
+		memcpy(_pubkey3, pubkey + 40, 20);
+		char _weight[20];
+		size = sprintf(_weight, "weight: %u", new_account.active.keys[i].weight);
+		_weight[size] = '\0';
+
+		layoutDialogSwipe(
+			&bmp_icon_question,
+			_cancel, _confirm, NULL,
+			_active_public_keys, _pubkey1, _pubkey2, _pubkey3, _weight, NULL
+		);
+
+		if (!protectButton(ButtonRequestType_ButtonRequest_SignTx, false)) {
+			return false;
+		}
+	}
+
+ 	for (uint8_t i = 0; i < new_account.active.permission_size; i ++ ) {
+		char _active_account[] = "Active accounts";
+		char _account_name[20];
+		char _permission[20];
+		char _weight[20];
+		size = format_producer(new_account.active.permissions[i].permission.actor, i + 1, _account_name);
+		_account_name[size] = '\0';
+		size = sprintf(_weight, "weight: %u", new_account.active.permissions[i].weight);
+		_weight[size] = '\0';
+		char per[13];
+		size = name_to_str(new_account.active.permissions[i].permission.permission, per);
+		per[size] = '\0';
+		size = sprintf(_permission, "permission: %s", per);
+		layoutDialogSwipe(
+			&bmp_icon_question,
+			_cancel, _confirm, NULL,
+			_active_account, _account_name, _permission, _weight, NULL, NULL
+		);
+		if (!protectButton(ButtonRequestType_ButtonRequest_SignTx, false)) {
+			return false;
+		}
+	}
+
+	char _relly_create_desc[] = "Really create";
+	layoutDialogSwipe(
+		&bmp_icon_question,
+		_cancel, _confirm, NULL,
+		_relly_create_desc, _account, new_account_name, NULL, NULL, NULL
+	);
+	if (!protectButton(ButtonRequestType_ButtonRequest_SignTx, false)) {
+			return false;
+	}
+	return true;
 }
 
 bool confirm_eosio_vote_producer(EosReaderCTX *ctx)
@@ -244,73 +428,72 @@ bool confirm_eosio_token_transfer(EosReaderCTX *ctx)
 	return protectButton(ButtonRequestType_ButtonRequest_SignTx, false); 
 }
 
+bool confirm_action(EosReaderCTX *ctx)
+{
+	EosAction action;
+	action_reader_next(ctx, &action);	
+	if (action.account == EOSIO) {
+		switch (action.name) 
+		{
+			case ACTION_NEW_ACCOUNT:
+				return confirm_eosio_newaccount(ctx);
+			case ACTION_BUY_RAM:
+			break;
+			case ACTION_SELL_RAM: 
+			break;
+			case ACTION_SELL_RAM_BYTES: 
+			break;
+			case ACTION_DELEGATE: 
+			break; 
+			case ACTION_UNDELEGATE: 
+			break;
+			case ACTION_VOTE_PRODUCER:
+				return confirm_eosio_vote_producer(ctx); 
+			default:
+			break;
+		}
+	} else if (action.account == EOSIO_TOKEN) {
+		switch (action.name) 
+		{
+			case ACTION_TRANSMFER: 
+				return confirm_eosio_token_transfer(ctx);
+			default: 
+				eos_signing_abort();
+			break;
+		}
+	} else if (action.account == EOSIO_MSIG) {
+		switch (action.name)
+		{
+			case ACTION_PROPOSE: 
+			break;
+			case ACTION_UNAPPROVE: 
+			break;
+			case ACTION_APPROVE: 
+			break;
+			case ACTION_CANCEL: 
+			break;
+			case ACTION_EXEC: 
+			break;
+			default:
+			break;
+		}
+		eos_signing_abort();
+	} else {
+		// other actions.
+		eos_signing_abort();
+	}
+	return false;
+}
+
 void eos_signing_init(EOSSignTx *msg, const HDNode *node)
 {
 	EosReaderCTX reader_ctx;
 	action_reader_init(&reader_ctx, msg->actions.bytes, msg->actions.size + 1);
 	uint64_t action_count = action_reader_count(&reader_ctx);
 	for (uint8_t i=0; i < action_count; i ++) {
-		EosAction action;
-		action_reader_next(&reader_ctx, &action);
-		if (action.account == EOSIO) {
-			switch (action.name) 
-			{
-				case ACTION_NEW_ACCOUNT:
-				break;
-				case ACTION_BUY_RAM:
-				break;
-				case ACTION_SELL_RAM: 
-				break;
-				case ACTION_SELL_RAM_BYTES: 
-				break;
-				case ACTION_DELEGATE: 
-				break; 
-				case ACTION_UNDELEGATE: 
-				break;
-				case ACTION_VOTE_PRODUCER:
-					if (!confirm_eosio_vote_producer(&reader_ctx)) {
-						fsm_sendFailure(FailureType_Failure_ActionCancelled, NULL);
-						eos_signing_abort();
-						return;		
-					}
-					break;
-				default:
-				break;
-			}
-		} else if (action.account == EOSIO_TOKEN) {
-			switch (action.name) 
-			{
-				case ACTION_TRANSMFER: 
-					if (!confirm_eosio_token_transfer(&reader_ctx)) {
-						fsm_sendFailure(FailureType_Failure_ActionCancelled, NULL);
-						eos_signing_abort();
-						return;	
-					}
-					break;
-				default: 
-				eos_signing_abort();
-				break;
-			}
-		} else if (action.account == EOSIO_MSIG) {
-			switch (action.name)
-			{
-				case ACTION_PROPOSE: 
-				break;
-				case ACTION_UNAPPROVE: 
-				break;
-				case ACTION_APPROVE: 
-				break;
-				case ACTION_CANCEL: 
-				break;
-				case ACTION_EXEC: 
-				break;
-				default:
-				break;
-			}
-			eos_signing_abort();
-		} else {
-			// other actions.
-			eos_signing_abort();
+		if (!confirm_action(&reader_ctx)) {
+			fsm_sendFailure(FailureType_Failure_UnexpectedMessage, _("Error"));
+			return;
 		}
 	}
 

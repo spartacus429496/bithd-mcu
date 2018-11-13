@@ -1,6 +1,8 @@
 #include <stdio.h>
 #include <string.h>
 #include "eos_utils.h"
+#include "ripemd160.h"
+#include "base58.h"
 
 char EOS_CHAR_MAP[] = ".12345abcdefghijklmnopqrstuvwxyz";
 
@@ -77,4 +79,16 @@ uint8_t format_producer(uint64_t name, int no, char *out)
 	int _size = name_to_str(name, prod);
 	prod[_size] = '\0';
 	return sprintf(out, "#%02d: %s", no, prod);
+}
+
+uint8_t format_eos_pubkey(uint8_t *pubkey, uint8_t len, int no, char *out) 
+{
+	uint8_t hash[20];
+	ripemd160(pubkey, len, hash);
+	uint8_t addy[len + 4];
+	memcpy(addy, pubkey, len);
+	memcpy(addy + len, hash, 4);
+	char b58addy[51];
+	base58_encode_check(addy, len + 4, b58addy, 51);
+	return sprintf(out, "#%02d: EOS%s", no, b58addy);
 }

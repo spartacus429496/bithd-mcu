@@ -229,6 +229,25 @@ bool confirm_eosio_newaccount(EosReaderCTX *ctx)
 		}
 	 }
 
+	char _confirm_active[] = "Confirm active";
+	 if (active_count > 1) {
+		char _weight[20];
+		char _threshold[20];
+		size = sprintf(_weight, "weight: %u", owner_weight);
+		_weight[size] = '\0';
+		size = sprintf(_threshold, "throshold: %lu", new_account.owner.threshold);
+		_threshold[size] = '\0';
+
+		layoutDialogSwipe(
+			&bmp_icon_question,
+			_cancel, _confirm, NULL,
+			_confirm_active, _weight, _threshold, NULL, NULL, NULL
+		);
+		if (!protectButton(ButtonRequestType_ButtonRequest_SignTx, false)) {
+			return false;
+		}
+	}
+
 	 for (uint8_t i = 0; i < new_account.active.key_size; i++ ) {
 		char _active_public_keys[] = "Active public keys";
 		char pubkey[60];
@@ -508,7 +527,7 @@ bool confirm_eosio_delegate(EosReaderCTX *ctx)
 	}
 
 	char _pay_account[] = "pay account";
-	_size = name_to_str(delegate.receiver, _account);
+	_size = name_to_str(delegate.from, _account);
 	_account[_size] = '\0';
 
 	layoutDialogSwipe(

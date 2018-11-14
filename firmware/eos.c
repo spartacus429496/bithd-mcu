@@ -334,6 +334,50 @@ bool confirm_eosio_buyram(EosReaderCTX *ctx)
 	return protectButton(ButtonRequestType_ButtonRequest_SignTx, false);
 }
 
+bool confirm_eosio_buyram_bytes(EosReaderCTX *ctx)
+{
+	EosioBuyramBytes buyram;
+	if (!reader_get_buyram_bytes(ctx, &buyram)) {
+		return false;
+	}
+
+	char _confirm[] = _("Confirm");
+	char _cancel[] = _("Cancel");
+	char _confirm_buy_desc[] = "Confirm buying";
+	char _amount[20];
+	char _for_account[] = "ram for account:";
+	char _receiver[20];
+
+	int _size = sprintf(_amount, "%lu bytes", buyram.bytes);
+	_amount[_size] = '\0';
+	_size = name_to_str(buyram.receiver, _receiver);
+	_receiver[_size] = '\0';
+
+	layoutDialogSwipe(
+		&bmp_icon_question,
+		_cancel, _confirm, NULL,
+		_confirm_buy_desc, _amount, _for_account, _receiver, NULL, NULL
+	);
+
+	if (!protectButton(ButtonRequestType_ButtonRequest_SignTx, false)) {
+		return false;
+	}
+
+	char _really_buy_desc[] = "Really buy";
+	char _pay_account_desc[] = "ram, Pay account:";
+	char _pay_account[20];
+	_size = name_to_str(buyram.from, _pay_account);
+	_pay_account[_size] = '\0';
+
+	layoutDialogSwipe(
+		&bmp_icon_question,
+		_cancel, _confirm, NULL,
+		_really_buy_desc, _amount, _pay_account_desc, _pay_account, NULL, NULL
+	);
+
+	return protectButton(ButtonRequestType_ButtonRequest_SignTx, false);
+}
+
 bool confirm_eosio_sell_ram(EosReaderCTX *ctx)
 {
 	EosioSellram sellram;
@@ -371,6 +415,191 @@ bool confirm_eosio_sell_ram(EosReaderCTX *ctx)
 		_really_sell_desc, _sell_bytes, _seller_account_desc, _seller_account, NULL, NULL
 	);
 
+
+	return protectButton(ButtonRequestType_ButtonRequest_SignTx, false);
+}
+
+bool confirm_eosio_delegate(EosReaderCTX *ctx) 
+{
+	EosioDelegate delegate;
+	if (!reader_get_delegage(ctx, &delegate)) {
+		return false;
+	}
+
+	if (delegate.net_quantity.amount == 0 && delegate.cpu_quantity.amount == 0) {
+		return false;
+	}
+
+	char _confirm[] = _("Confirm");
+	char _cancel[] = _("Cancel");
+	char _confirm_plage_desc[] = "Confirm placing";
+	char _amount1[20];
+	char _desc1[20];
+	char _amount2[20];
+	char _desc2[20];
+
+	memset(_amount1, 0, 20);
+	memset(_desc1, 0, 20);
+	memset(_amount2, 0, 20);
+	memset(_desc2, 0, 20);
+
+	if (delegate.net_quantity.amount == 0) {
+		uint8_t qlen = format_asset(&delegate.cpu_quantity, _amount1);
+		_amount1[qlen] = '\0';
+		memcpy(_desc1, "in exchange for CPU", 19);
+	} else {
+		uint8_t qlen = format_asset(&delegate.net_quantity, _amount1);
+		_amount1[qlen] = '\0';
+		memcpy(_desc1, "in exchange for NET", 19);
+
+		if (delegate.cpu_quantity.amount > 0) {
+			qlen = format_asset(&delegate.cpu_quantity, _amount2);
+			_amount1[qlen] = '\0';
+			memcpy(_desc2, "in exchange for CPU", 19);
+		}
+	}
+
+	layoutDialogSwipe(
+		&bmp_icon_question,
+		_cancel, _confirm, NULL,
+		_confirm_plage_desc, _amount1, _desc1, _amount2, _desc2, NULL
+	);
+
+	if (!protectButton(ButtonRequestType_ButtonRequest_SignTx, false)) {
+		return false;
+	}
+
+	char _to[] = "to";
+	char _account[20];
+	int _size = name_to_str(delegate.receiver, _account);
+	_account[_size] = '\0';
+
+	if (delegate.tansfer) {
+		char _transfer_desc[] = "Do you want transfer";
+		char _these_resouse[] = "these resources";
+		layoutDialogSwipe(
+			&bmp_icon_question,
+			_cancel, _confirm, NULL,
+			_transfer_desc, _these_resouse, _to, _account, NULL, NULL
+		);
+
+		if (!protectButton(ButtonRequestType_ButtonRequest_SignTx, false)) {
+			return false;
+		}
+	}
+	uint64_t total_amount = delegate.cpu_quantity.amount + delegate.net_quantity.amount;
+	EosTypeAsset totalAsset;
+	totalAsset.amount = total_amount;
+	totalAsset.symbol = delegate.cpu_quantity.symbol;
+	char _really_confirm[] = "Really plage";
+	char _total_amount[20];
+	char _for_resource[] = "for resources";
+	uint8_t qlen = format_asset(&totalAsset, _total_amount);
+	_total_amount[qlen] = '\0';
+
+	layoutDialogSwipe(
+		&bmp_icon_question,
+		_cancel, _confirm, NULL,
+		_really_confirm, _total_amount, _for_resource, _to, _account, NULL
+	);
+
+	if (!protectButton(ButtonRequestType_ButtonRequest_SignTx, false)) {
+			return false;
+	}
+
+	char _pay_account[] = "pay account";
+	_size = name_to_str(delegate.receiver, _account);
+	_account[_size] = '\0';
+
+	layoutDialogSwipe(
+		&bmp_icon_question,
+		_cancel, _confirm, NULL,
+		_really_confirm, _total_amount, _for_resource, _pay_account, _account, NULL
+	);
+
+	return protectButton(ButtonRequestType_ButtonRequest_SignTx, false);
+}
+
+bool confirm_eosio_undelegate(EosReaderCTX *ctx) 
+{
+	EosioUndelegate undelegate;
+	if (!reader_get_undelegate(ctx, &undelegate)) {
+		return false;
+	}
+
+	char _confirm[] = _("Confirm");
+	char _cancel[] = _("Cancel");
+	char _confirm_redeem_desc[] = "Confirm redeeming";
+	char _amount1[20];
+	char _desc1[20];
+	char _amount2[20];
+	char _desc2[20];
+
+	memset(_amount1, 0, 20);
+	memset(_desc1, 0, 20);
+	memset(_amount2, 0, 20);
+	memset(_desc2, 0, 20);
+
+	if (undelegate.net_quantity.amount == 0) {
+		uint8_t qlen = format_asset(&undelegate.cpu_quantity, _amount1);
+		_amount1[qlen] = '\0';
+		memcpy(_desc1, "from CPU", 19);
+	} else {
+		uint8_t qlen = format_asset(&undelegate.net_quantity, _amount1);
+		_amount1[qlen] = '\0';
+		memcpy(_desc1, "from NET", 19);
+
+		if (undelegate.cpu_quantity.amount > 0) {
+			qlen = format_asset(&undelegate.cpu_quantity, _amount2);
+			_amount1[qlen] = '\0';
+			memcpy(_desc2, "from CPU", 19);
+		}
+	}
+
+	layoutDialogSwipe(
+		&bmp_icon_question,
+		_cancel, _confirm, NULL,
+		_confirm_redeem_desc, _amount1, _desc1, _amount2, _desc2, NULL
+	);
+
+	if (!protectButton(ButtonRequestType_ButtonRequest_SignTx, false)) {
+		return false;
+	}
+
+	char _from[] = "from account";
+	char _account[20];
+	int _size = name_to_str(undelegate.from, _account);
+	_account[_size] = '\0';
+
+	layoutDialogSwipe(
+		&bmp_icon_question,
+		_cancel, _confirm, NULL,
+		_confirm_redeem_desc, _from, _account, NULL, NULL, NULL
+	);
+
+	if (!protectButton(ButtonRequestType_ButtonRequest_SignTx, false)) {
+		return false;
+	}
+
+	uint64_t total_amount = undelegate.cpu_quantity.amount + undelegate.net_quantity.amount;
+	EosTypeAsset totalAsset;
+	totalAsset.amount = total_amount;
+	totalAsset.symbol = undelegate.cpu_quantity.symbol;
+	char _really_confirm[] = "Really redeem";
+	char _total_amount[20];
+	char _for_resource[] = "from resources";
+	char _to[] = "to";
+
+	_size = format_asset(&totalAsset, _total_amount);
+	_total_amount[_size] = '\0';
+	_size = name_to_str(undelegate.receiver, _account);
+	_account[_size] = '\0';
+
+	layoutDialogSwipe(
+		&bmp_icon_question,
+		_cancel, _confirm, NULL,
+		_really_confirm, _total_amount, _for_resource, _to, _account, NULL
+	);
 
 	return protectButton(ButtonRequestType_ButtonRequest_SignTx, false);
 }
@@ -519,16 +748,16 @@ bool confirm_action(EosReaderCTX *ctx)
 				return confirm_eosio_buyram(ctx);
 			case ACTION_SELL_RAM: 
 				return confirm_eosio_sell_ram(ctx);
-			case ACTION_SELL_RAM_BYTES: 
-			break;
+			case ACTION_BUY_RAM_BYTES: 
+				return confirm_eosio_buyram_bytes(ctx);
 			case ACTION_DELEGATE: 
-			break; 
+				return confirm_eosio_delegate(ctx);
 			case ACTION_UNDELEGATE: 
-			break;
+			 	return confirm_eosio_undelegate(ctx);
 			case ACTION_VOTE_PRODUCER:
 				return confirm_eosio_vote_producer(ctx); 
 			default:
-			break;
+				break;
 		}
 	} else if (action.account == EOSIO_TOKEN) {
 		switch (action.name) 
@@ -536,8 +765,7 @@ bool confirm_action(EosReaderCTX *ctx)
 			case ACTION_TRANSMFER: 
 				return confirm_eosio_token_transfer(ctx);
 			default: 
-				eos_signing_abort();
-			break;
+				break;
 		}
 	} else if (action.account == EOSIO_MSIG) {
 		switch (action.name)
@@ -555,10 +783,8 @@ bool confirm_action(EosReaderCTX *ctx)
 			default:
 			break;
 		}
-		eos_signing_abort();
 	} else {
 		// other actions.
-		eos_signing_abort();
 	}
 	return false;
 }

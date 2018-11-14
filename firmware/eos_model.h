@@ -13,7 +13,7 @@
 #define ACTION_UNDELEGATE 	    0xd4d2a8a986ca8fc0
 #define ACTION_BUY_RAM		    0x3ebd734800000000
 #define ACTION_SELL_RAM		    0xc2a31b9a40000000
-#define ACTION_SELL_RAM_BYTES   0x3ebd7348fecab000
+#define ACTION_BUY_RAM_BYTES   0x3ebd7348fecab000
 
 #define EOSIO_TOKEN             0x5530ea033482a600
 #define ACTION_TRANSMFER 	    0xcdcd3c2d57000000

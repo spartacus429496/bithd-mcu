@@ -334,6 +334,47 @@ bool confirm_eosio_buyram(EosReaderCTX *ctx)
 	return protectButton(ButtonRequestType_ButtonRequest_SignTx, false);
 }
 
+bool confirm_eosio_sell_ram(EosReaderCTX *ctx)
+{
+	EosioSellram sellram;
+	if (!reader_get_sellram(ctx, &sellram)) {
+		return false;
+	}
+
+	char _confirm[] = _("Confirm");
+	char _cancel[] = _("Cancel");
+	char _confirm_sell_desc[] = "Confirm selling";
+	char _sell_bytes[20];
+	char _seller_account_desc[] = "seller account:";
+	char _seller_account[20];
+
+	int _size = sprintf(_sell_bytes, "%llu bytes", sellram.bytes);
+	_sell_bytes[_size] = '\0';
+	_size = name_to_str(sellram.from, _seller_account);
+	_seller_account[_size] = '\0';
+
+	layoutDialogSwipe(
+		&bmp_icon_question,
+		_cancel, _confirm, NULL,
+		_confirm_sell_desc, _sell_bytes, _seller_account_desc, _seller_account, NULL, NULL
+	);
+
+	if (!protectButton(ButtonRequestType_ButtonRequest_SignTx, false)) {
+		return false;
+	}
+
+	char _really_sell_desc[] = "Really sell";
+
+	layoutDialogSwipe(
+		&bmp_icon_question,
+		_cancel, _confirm, NULL,
+		_really_sell_desc, _sell_bytes, _seller_account_desc, _seller_account, NULL, NULL
+	);
+
+
+	return protectButton(ButtonRequestType_ButtonRequest_SignTx, false);
+}
+
 bool confirm_eosio_vote_producer(EosReaderCTX *ctx)
 {
 	EosioVoteProducer vote_producer;
@@ -477,7 +518,7 @@ bool confirm_action(EosReaderCTX *ctx)
 			case ACTION_BUY_RAM:
 				return confirm_eosio_buyram(ctx);
 			case ACTION_SELL_RAM: 
-			break;
+				return confirm_eosio_sell_ram(ctx);
 			case ACTION_SELL_RAM_BYTES: 
 			break;
 			case ACTION_DELEGATE: 

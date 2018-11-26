@@ -37,19 +37,6 @@ int transaction_reader_get(EosReaderCTX *_ctx, EosTransaction *trx)
             return FAILED;
         }
     }
-    if (!reader_get_variable_uint(_ctx, &trx->actions_size)) {
-       return FAILED;
-    }
-    if (trx->actions_size > 4) {
-        return FAILED;
-    }
-    for (uint8_t i = 0; i < trx->actions_size; i++) {
-        if (!action_reader_next(_ctx, trx->actions + i)) {
-            return FAILED;
-        }
-    }
-    if (!reader_get_variable_uint(_ctx, &trx->transaction_extensions_size)) {
-        return FAILED;
-    } 
+    
     return SUCCESS;
 }

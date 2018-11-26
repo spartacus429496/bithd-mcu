@@ -167,9 +167,6 @@ int reader_get_propose(EosReaderCTX *_ctx, EosioMsigPropose *propose)
             return FAILED;
         }
     }
-    if (!transaction_reader_get(_ctx, &propose->inner_trx)) {
-        return FAILED;
-    }
     return SUCCESS;
 }
 

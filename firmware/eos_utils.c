@@ -88,7 +88,8 @@ uint8_t format_eos_pubkey(uint8_t *pubkey, uint8_t len, int no, char *out)
 	uint8_t addy[len + 4];
 	memcpy(addy, pubkey, len);
 	memcpy(addy + len, hash, 4);
-	char b58addy[51];
-	base58_encode_check(addy, len + 4, b58addy, 51);
+	char b58addy[60];
+	size_t b58sz = 60;
+	b58enc(b58addy, &b58sz, addy, len + 4);
 	return sprintf(out, "#%02d: EOS%s", no, b58addy);
 }

@@ -95,9 +95,6 @@ typedef struct eos_transaction
     uint64_t delay_sec;
     uint64_t contract_free_actions_size;
     EosAction contract_free_actions[1];
-    uint64_t actions_size;
-    EosAction actions[4];
-    uint64_t transaction_extensions_size;
 } EosTransaction;
 
 // eosio
@@ -174,7 +171,6 @@ typedef struct eosio_msig_propose
     EosTypeName proposal_name;
     uint64_t requested_size;
     EosPermissionLevel requested[4];
-    EosTransaction inner_trx;
 } EosioMsigPropose;
 
 typedef struct eosio_msig_approve

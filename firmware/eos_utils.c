@@ -68,7 +68,7 @@ uint8_t format_asset(EosTypeAsset *asset, char *out)
     double value = asset->amount * 1.0;
     for (int i = 0; i < decimals; i ++)
         value /= 10;
-    char sym[12];
+    char sym[8];
     symbol_to_str(asset->symbol, sym);
     return sprintf(out, "%.4f %s", value, sym);    
 }

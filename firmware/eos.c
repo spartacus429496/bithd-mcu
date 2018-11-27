@@ -121,8 +121,7 @@ bool confirm_eosio_newaccount(EosReaderCTX *ctx)
 	char _account[] = "account:";
 	char new_account_name[13];
 	memset(new_account_name, 0, 13);
-	int size = name_to_str(new_account.new_name, new_account_name);
-	new_account_name[size] = '\0';
+	name_to_str(new_account.new_name, new_account_name);
 
 	layoutDialogSwipe(
 		&bmp_icon_question,
@@ -142,9 +141,6 @@ bool confirm_eosio_newaccount(EosReaderCTX *ctx)
 	for (uint8_t i = 0; i < new_account.owner.permission_size; i++ ) {
 		owner_weight += new_account.owner.permissions[i].weight;
 	}
-	if (owner_count == 1 && (new_account.owner.keys[0].weight != owner_weight || new_account.owner.permissions[0].weight != owner_weight)) {
-		return false;
-	}
 
 	uint16_t active_count = new_account.active.key_size + new_account.active.permission_size;
 	uint16_t active_weight = 0;
@@ -154,9 +150,6 @@ bool confirm_eosio_newaccount(EosReaderCTX *ctx)
 	for (uint8_t i = 0; i < new_account.active.permission_size; i++ ) {
 		active_weight += new_account.active.permissions[i].weight;
 	}
-	if (active_count == 1 && (new_account.active.keys[0].weight != active_weight || new_account.active.permissions[0].weight != active_weight)) {
-		return false;
-	}
 
 	if (owner_count == 0 || active_count == 0) {
 		return false;
@@ -164,12 +157,13 @@ bool confirm_eosio_newaccount(EosReaderCTX *ctx)
 
 	char _confirm_owner[] = "Confirm owner";
 	if (owner_count > 1) {
-		char _weight[20];
-		char _threshold[20];
-		size = sprintf(_weight, "weight: %u", owner_weight);
-		_weight[size] = '\0';
-		size = sprintf(_threshold, "throshold: %lu", new_account.owner.threshold);
-		_threshold[size] = '\0';
+		char _weight[21];
+		char _threshold[21];
+		memset(_weight, 0, 21);
+		memset(_threshold, 0, 21);
+
+		sprintf(_weight, "weight: %u", owner_weight);
+		sprintf(_threshold, "throshold: %lu", new_account.owner.threshold);
 
 		layoutDialogSwipe(
 			&bmp_icon_question,
@@ -182,18 +176,22 @@ bool confirm_eosio_newaccount(EosReaderCTX *ctx)
 	}
 	for (uint8_t i = 0; i < new_account.owner.key_size; i++ ) {
 		char _owner_public_keys[] = "Owner public keys";
-		char pubkey[60];
-		size = format_eos_pubkey(new_account.owner.keys[i].pubkey.pubkey, 33, i + 1, pubkey);
-		pubkey[size] = '\0';
-		char _pubkey1[20];
-		char _pubkey2[20];
-		char _pubkey3[20];
+		char pubkey[61];
+		format_eos_pubkey(new_account.owner.keys[i].pubkey.pubkey, 33, i + 1, pubkey);
+		char _pubkey1[21];
+		char _pubkey2[21];
+		char _pubkey3[21];
+		memset(_pubkey1, 0, 21);
+		memset(_pubkey2, 0, 21);
+		memset(_pubkey3, 0, 21);
+
 		memcpy(_pubkey1, pubkey, 20);
 		memcpy(_pubkey2, pubkey + 20, 20);
 		memcpy(_pubkey3, pubkey + 40, 20);
-		char _weight[20];
-		size = sprintf(_weight, "weight: %u", new_account.owner.keys[i].weight);
-		_weight[size] = '\0';
+
+		char _weight[21];
+		memset(_weight, 0, 21);
+		sprintf(_weight, "weight: %u", new_account.owner.keys[i].weight);
 
 		layoutDialogSwipe(
 			&bmp_icon_question,
@@ -208,17 +206,20 @@ bool confirm_eosio_newaccount(EosReaderCTX *ctx)
 
  	for (uint8_t i = 0; i < new_account.owner.permission_size; i ++ ) {
 		char _owner_account[] = "Owner accounts";
-		char _account_name[20];
-		char _permission[20];
-		char _weight[20];
-		size = format_producer(new_account.owner.permissions[i].permission.actor, i + 1, _account_name);
-		_account_name[size] = '\0';
-		size = sprintf(_weight, "weight: %u", new_account.owner.permissions[i].weight);
-		_weight[size] = '\0';
+		char _account_name[21];
+		char _permission[21];
+		char _weight[21];
+		memset(_account_name, 0, 21);
+		memset(_permission, 0, 21);
+		memset(_weight, 0, 21);
+
+		format_producer(new_account.owner.permissions[i].permission.actor, i + 1, _account_name);
+		sprintf(_weight, "weight: %u", new_account.owner.permissions[i].weight);
 		char per[13];
-		size = name_to_str(new_account.owner.permissions[i].permission.permission, per);
-		per[size] = '\0';
-		size = sprintf(_permission, "permission: %s", per);
+		memset(per, 0, 13);
+		name_to_str(new_account.owner.permissions[i].permission.permission, per);
+		sprintf(_permission, "permission: %s", per);
+
 		layoutDialogSwipe(
 			&bmp_icon_question,
 			_cancel, _confirm, NULL,
@@ -231,12 +232,13 @@ bool confirm_eosio_newaccount(EosReaderCTX *ctx)
 
 	char _confirm_active[] = "Confirm active";
 	 if (active_count > 1) {
-		char _weight[20];
-		char _threshold[20];
-		size = sprintf(_weight, "weight: %u", owner_weight);
-		_weight[size] = '\0';
-		size = sprintf(_threshold, "throshold: %lu", new_account.owner.threshold);
-		_threshold[size] = '\0';
+		char _weight[21];
+		char _threshold[21];
+		memset(_weight, 0, 21);
+		memset(_threshold, 0, 21);
+
+		sprintf(_weight, "weight: %u", owner_weight);
+		sprintf(_threshold, "throshold: %lu", new_account.owner.threshold);
 
 		layoutDialogSwipe(
 			&bmp_icon_question,
@@ -250,18 +252,23 @@ bool confirm_eosio_newaccount(EosReaderCTX *ctx)
 
 	 for (uint8_t i = 0; i < new_account.active.key_size; i++ ) {
 		char _active_public_keys[] = "Active public keys";
-		char pubkey[60];
-		size = format_eos_pubkey(new_account.active.keys[i].pubkey.pubkey, 33, i + 1, pubkey);
-		pubkey[size] = '\0';
-		char _pubkey1[20];
-		char _pubkey2[20];
-		char _pubkey3[20];
+		char pubkey[61];
+		memset(pubkey, 0, 61);
+		format_eos_pubkey(new_account.active.keys[i].pubkey.pubkey, 33, i + 1, pubkey);
+
+		char _pubkey1[21];
+		char _pubkey2[21];
+		char _pubkey3[21];
+		memset(_pubkey1, 0, 21);
+		memset(_pubkey2, 0, 21);
+		memset(_pubkey3, 0, 21);
+
 		memcpy(_pubkey1, pubkey, 20);
 		memcpy(_pubkey2, pubkey + 20, 20);
 		memcpy(_pubkey3, pubkey + 40, 20);
-		char _weight[20];
-		size = sprintf(_weight, "weight: %u", new_account.active.keys[i].weight);
-		_weight[size] = '\0';
+		char _weight[21];
+		memset(_weight, 0, 21);
+		sprintf(_weight, "weight: %u", new_account.active.keys[i].weight);
 
 		layoutDialogSwipe(
 			&bmp_icon_question,
@@ -276,17 +283,20 @@ bool confirm_eosio_newaccount(EosReaderCTX *ctx)
 
  	for (uint8_t i = 0; i < new_account.active.permission_size; i ++ ) {
 		char _active_account[] = "Active accounts";
-		char _account_name[20];
-		char _permission[20];
-		char _weight[20];
-		size = format_producer(new_account.active.permissions[i].permission.actor, i + 1, _account_name);
-		_account_name[size] = '\0';
-		size = sprintf(_weight, "weight: %u", new_account.active.permissions[i].weight);
-		_weight[size] = '\0';
+		char _account_name[21];
+		char _permission[21];
+		char _weight[21];
+		memset(_account_name, 0, 21);
+		memset(_permission, 0, 21);
+		memset(_weight, 0, 21);
+
+		format_producer(new_account.active.permissions[i].permission.actor, i + 1, _account_name);
+		sprintf(_weight, "weight: %u", new_account.active.permissions[i].weight);
 		char per[13];
-		size = name_to_str(new_account.active.permissions[i].permission.permission, per);
-		per[size] = '\0';
-		size = sprintf(_permission, "permission: %s", per);
+		memset(per, 0, 13);
+		name_to_str(new_account.active.permissions[i].permission.permission, per);
+		sprintf(_permission, "permission: %s", per);
+
 		layoutDialogSwipe(
 			&bmp_icon_question,
 			_cancel, _confirm, NULL,
@@ -319,14 +329,15 @@ bool confirm_eosio_buyram(EosReaderCTX *ctx)
 	char _confirm[] = _("Confirm");
 	char _cancel[] = _("Cancel");
 	char _confirm_buy_desc[] = "Confirm buying";
-	char _amount[20];
+	char _amount[21];
 	char _for_account[] = "ram for account:";
-	char _receiver[20];
+	char _receiver[21];
 
-	uint8_t qlen = format_asset(&buyram.quantity, _amount);
-	_amount[qlen] = '\0';
-	int _size = name_to_str(buyram.receiver, _receiver);
-	_receiver[_size] = '\0';
+	memset(_amount, 0, 21);
+	memset(_receiver, 0, 21);
+
+	format_asset(&buyram.quantity, _amount);
+	name_to_str(buyram.receiver, _receiver);
 
 	layoutDialogSwipe(
 		&bmp_icon_question,
@@ -340,9 +351,9 @@ bool confirm_eosio_buyram(EosReaderCTX *ctx)
 
 	char _really_buy_desc[] = "Really buy";
 	char _pay_account_desc[] = "ram, Pay account:";
-	char _pay_account[20];
-	_size = name_to_str(buyram.from, _pay_account);
-	_pay_account[_size] = '\0';
+	char _pay_account[21];
+	memset(_pay_account, 0, 21);
+	name_to_str(buyram.from, _pay_account);
 
 	layoutDialogSwipe(
 		&bmp_icon_question,
@@ -363,14 +374,15 @@ bool confirm_eosio_buyram_bytes(EosReaderCTX *ctx)
 	char _confirm[] = _("Confirm");
 	char _cancel[] = _("Cancel");
 	char _confirm_buy_desc[] = "Confirm buying";
-	char _amount[20];
+	char _amount[21];
 	char _for_account[] = "ram for account:";
-	char _receiver[20];
+	char _receiver[21];
 
-	int _size = sprintf(_amount, "%lu bytes", buyram.bytes);
-	_amount[_size] = '\0';
-	_size = name_to_str(buyram.receiver, _receiver);
-	_receiver[_size] = '\0';
+	memset(_amount, 0, 21);
+	memset(_receiver, 0, 21);
+
+	sprintf(_amount, "%lu bytes", buyram.bytes);
+	name_to_str(buyram.receiver, _receiver);
 
 	layoutDialogSwipe(
 		&bmp_icon_question,
@@ -384,9 +396,10 @@ bool confirm_eosio_buyram_bytes(EosReaderCTX *ctx)
 
 	char _really_buy_desc[] = "Really buy";
 	char _pay_account_desc[] = "ram, Pay account:";
-	char _pay_account[20];
-	_size = name_to_str(buyram.from, _pay_account);
-	_pay_account[_size] = '\0';
+	char _pay_account[21];
+
+	memset(_pay_account, 0, 21);
+	name_to_str(buyram.from, _pay_account);
 
 	layoutDialogSwipe(
 		&bmp_icon_question,
@@ -407,14 +420,15 @@ bool confirm_eosio_sell_ram(EosReaderCTX *ctx)
 	char _confirm[] = _("Confirm");
 	char _cancel[] = _("Cancel");
 	char _confirm_sell_desc[] = "Confirm selling";
-	char _sell_bytes[20];
+	char _sell_bytes[21];
 	char _seller_account_desc[] = "seller account:";
-	char _seller_account[20];
+	char _seller_account[21];
 
-	int _size = sprintf(_sell_bytes, "%llu bytes", sellram.bytes);
-	_sell_bytes[_size] = '\0';
-	_size = name_to_str(sellram.from, _seller_account);
-	_seller_account[_size] = '\0';
+	memset(_sell_bytes, 0, 21);
+	memset(_seller_account, 0, 21);
+
+	sprintf(_sell_bytes, "%llu bytes", sellram.bytes);
+	name_to_str(sellram.from, _seller_account);
 
 	layoutDialogSwipe(
 		&bmp_icon_question,
@@ -452,28 +466,25 @@ bool confirm_eosio_delegate(EosReaderCTX *ctx)
 	char _confirm[] = _("Confirm");
 	char _cancel[] = _("Cancel");
 	char _confirm_plage_desc[] = "Confirm placing";
-	char _amount1[20];
-	char _desc1[20];
-	char _amount2[20];
-	char _desc2[20];
+	char _amount1[21];
+	char _desc1[21];
+	char _amount2[21];
+	char _desc2[21];
 
-	memset(_amount1, 0, 20);
-	memset(_desc1, 0, 20);
-	memset(_amount2, 0, 20);
-	memset(_desc2, 0, 20);
+	memset(_amount1, 0, 21);
+	memset(_desc1, 0, 21);
+	memset(_amount2, 0, 21);
+	memset(_desc2, 0, 21);
 
 	if (delegate.net_quantity.amount == 0) {
-		uint8_t qlen = format_asset(&delegate.cpu_quantity, _amount1);
-		_amount1[qlen] = '\0';
+		format_asset(&delegate.cpu_quantity, _amount1);
 		memcpy(_desc1, "in exchange for CPU", 19);
 	} else {
-		uint8_t qlen = format_asset(&delegate.net_quantity, _amount1);
-		_amount1[qlen] = '\0';
+		format_asset(&delegate.net_quantity, _amount1);
 		memcpy(_desc1, "in exchange for NET", 19);
 
 		if (delegate.cpu_quantity.amount > 0) {
-			qlen = format_asset(&delegate.cpu_quantity, _amount2);
-			_amount1[qlen] = '\0';
+			format_asset(&delegate.cpu_quantity, _amount2);
 			memcpy(_desc2, "in exchange for CPU", 19);
 		}
 	}
@@ -489,9 +500,9 @@ bool confirm_eosio_delegate(EosReaderCTX *ctx)
 	}
 
 	char _to[] = "to";
-	char _account[20];
-	int _size = name_to_str(delegate.receiver, _account);
-	_account[_size] = '\0';
+	char _account[21];
+	memset(_account, 0, 21);
+	name_to_str(delegate.receiver, _account);
 
 	if (delegate.tansfer) {
 		char _transfer_desc[] = "Do you want transfer";
@@ -511,10 +522,11 @@ bool confirm_eosio_delegate(EosReaderCTX *ctx)
 	totalAsset.amount = total_amount;
 	totalAsset.symbol = delegate.cpu_quantity.symbol;
 	char _really_confirm[] = "Really plage";
-	char _total_amount[20];
+	char _total_amount[21];
 	char _for_resource[] = "for resources";
-	uint8_t qlen = format_asset(&totalAsset, _total_amount);
-	_total_amount[qlen] = '\0';
+
+	memset(_total_amount, 0, 21);
+	format_asset(&totalAsset, _total_amount);
 
 	layoutDialogSwipe(
 		&bmp_icon_question,
@@ -527,8 +539,8 @@ bool confirm_eosio_delegate(EosReaderCTX *ctx)
 	}
 
 	char _pay_account[] = "pay account";
-	_size = name_to_str(delegate.from, _account);
-	_account[_size] = '\0';
+	memset(_account, 0, 21);
+	name_to_str(delegate.from, _account);
 
 	layoutDialogSwipe(
 		&bmp_icon_question,
@@ -549,29 +561,26 @@ bool confirm_eosio_undelegate(EosReaderCTX *ctx)
 	char _confirm[] = _("Confirm");
 	char _cancel[] = _("Cancel");
 	char _confirm_redeem_desc[] = "Confirm redeeming";
-	char _amount1[20];
-	char _desc1[20];
-	char _amount2[20];
-	char _desc2[20];
+	char _amount1[21];
+	char _desc1[21];
+	char _amount2[21];
+	char _desc2[21];
 
-	memset(_amount1, 0, 20);
-	memset(_desc1, 0, 20);
-	memset(_amount2, 0, 20);
-	memset(_desc2, 0, 20);
+	memset(_amount1, 0, 21);
+	memset(_desc1, 0, 21);
+	memset(_amount2, 0, 21);
+	memset(_desc2, 0, 21);
 
 	if (undelegate.net_quantity.amount == 0) {
-		uint8_t qlen = format_asset(&undelegate.cpu_quantity, _amount1);
-		_amount1[qlen] = '\0';
-		memcpy(_desc1, "from CPU", 19);
+		format_asset(&undelegate.cpu_quantity, _amount1);
+		strcpy(_desc1, "from CPU");
 	} else {
-		uint8_t qlen = format_asset(&undelegate.net_quantity, _amount1);
-		_amount1[qlen] = '\0';
-		memcpy(_desc1, "from NET", 19);
+		format_asset(&undelegate.net_quantity, _amount1);
+		strcpy(_desc1, "from NET");
 
 		if (undelegate.cpu_quantity.amount > 0) {
-			qlen = format_asset(&undelegate.cpu_quantity, _amount2);
-			_amount1[qlen] = '\0';
-			memcpy(_desc2, "from CPU", 19);
+			format_asset(&undelegate.cpu_quantity, _amount2);
+			strcpy(_desc2, "from CPU");
 		}
 	}
 
@@ -586,9 +595,9 @@ bool confirm_eosio_undelegate(EosReaderCTX *ctx)
 	}
 
 	char _from[] = "from account";
-	char _account[20];
-	int _size = name_to_str(undelegate.from, _account);
-	_account[_size] = '\0';
+	char _account[21];
+	memset(_account, 0, 21);
+	name_to_str(undelegate.from, _account);
 
 	layoutDialogSwipe(
 		&bmp_icon_question,
@@ -605,14 +614,15 @@ bool confirm_eosio_undelegate(EosReaderCTX *ctx)
 	totalAsset.amount = total_amount;
 	totalAsset.symbol = undelegate.cpu_quantity.symbol;
 	char _really_confirm[] = "Really redeem";
-	char _total_amount[20];
+	char _total_amount[21];
 	char _for_resource[] = "from resources";
 	char _to[] = "to";
 
-	_size = format_asset(&totalAsset, _total_amount);
-	_total_amount[_size] = '\0';
-	_size = name_to_str(undelegate.receiver, _account);
-	_account[_size] = '\0';
+	memset(_total_amount, 0, 21);
+	memset(_account, 0, 21);
+
+	format_asset(&totalAsset, _total_amount);
+	name_to_str(undelegate.receiver, _account);
 
 	layoutDialogSwipe(
 		&bmp_icon_question,
@@ -632,9 +642,9 @@ bool confirm_eosio_vote_producer(EosReaderCTX *ctx)
 
 	char _voting_desc[] = "Confirm voting";
 	char _producers[] = "producers:";
-	char _producer1[20]; 
-	char _producer2[20];
-	char _producer3[20];
+	char _producer1[21]; 
+	char _producer2[21];
+	char _producer3[21];
 
 	char _next[] = _("Next");
 	char _confirm[] = _("Confirm");
@@ -644,9 +654,9 @@ bool confirm_eosio_vote_producer(EosReaderCTX *ctx)
 
 	while (page_count < vote_producer.producer_size) {
 
-		memset(_producer1, 0, 20);
-		memset(_producer2, 0, 20);
-		memset(_producer3, 0, 20);	
+		memset(_producer1, 0, 21);
+		memset(_producer2, 0, 21);
+		memset(_producer3, 0, 21);	
 
 		uint8_t left_count = vote_producer.producer_size - page_count;
 		uint8_t page_size = left_count > 3? 3: left_count;
@@ -665,15 +675,8 @@ bool confirm_eosio_vote_producer(EosReaderCTX *ctx)
 
 		layoutDialogSwipe(
 			&bmp_icon_question,
-			_cancel,
-			page_count >= vote_producer.producer_size? _confirm: _next,
-			NULL,
-			_voting_desc,
-			_producers,
-			_producer1,
-			_producer2,
-			_producer3,
-			NULL
+			_cancel, page_count >= vote_producer.producer_size? _confirm: _next, NULL,
+			_voting_desc, _producers, _producer1, _producer2, _producer3, NULL
 		);
 
 		if (!protectButton(ButtonRequestType_ButtonRequest_SignTx, false)) {
@@ -685,8 +688,8 @@ bool confirm_eosio_vote_producer(EosReaderCTX *ctx)
 	char _relly_producers[] = "producers?";
 	char _voter[] = "voter:";
 	char voter[13];
-	int size = name_to_str(vote_producer.voter, voter);
-	voter[size] = '\0';
+	memset(voter, 0, 13);
+	name_to_str(vote_producer.voter, voter);
 
 	layoutDialogSwipe(
 		&bmp_icon_question,
@@ -705,29 +708,20 @@ bool confirm_eosio_token_transfer(EosReaderCTX *ctx)
 	}
 
 	char _sending_desc[] = "Confirm sending";
-	char _send_value[] = "_____________________";
+	char _send_value[21];
 	char _to_desc[] = "to:";
-	char _to[] = "______________________";
+	char _to[21];
 
-	int _size = name_to_str(transfer.to, _to);
-	_to[_size] = '\0';
+	memset(_send_value, 0, 21);
+	memset(_to, 0, 21);
 
-	char quantity[40];
-	uint8_t qlen = format_asset(&transfer.quantity, quantity);
-	memcpy(_send_value, quantity, qlen);
-	_send_value[qlen] = '\0';
+	name_to_str(transfer.to, _to);
+	format_asset(&transfer.quantity, _send_value);
 
 	layoutDialogSwipe(
 		&bmp_icon_question,
-		_("Cancel"),
-		_("Confrim"),
-		NULL,
-		_sending_desc,
-		_send_value,
-		_to_desc,
-		_to,
-		NULL,
-		NULL
+		_("Cancel"), _("Confrim"), NULL,
+		_sending_desc, _send_value, _to_desc, _to, NULL, NULL
 	);
 	if (!protectButton(ButtonRequestType_ButtonRequest_SignTx, false)) {
 		return false;
@@ -735,23 +729,61 @@ bool confirm_eosio_token_transfer(EosReaderCTX *ctx)
 
 	char _really_send[] = "Really send";
 	char _from_desc[] = "pay account:";
-	char _from[] = "______________________";
-	_size = name_to_str(transfer.from, _from);
-	_from[_size] = '\0';
+	char _from[21];
+	memset(_from, 0, 21);
+	name_to_str(transfer.from, _from);
 
 	layoutDialogSwipe(
 		&bmp_icon_question,
-		_("Cancel"),
-		_("Confrim"),
-		NULL,
-		_really_send,
-		_send_value,
-		_from_desc,
-		_from,
-		NULL,
-		NULL
+		_("Cancel"), _("Confrim"), NULL,
+		_really_send, _send_value, _from_desc, _from, NULL, NULL
 	);
 	return protectButton(ButtonRequestType_ButtonRequest_SignTx, false); 
+}
+
+bool confirm_eosio_msig_propose(EosReaderCTX *ctx)
+{
+	EosioMsigPropose propose;
+	if (!reader_get_propose(ctx, &propose)) {
+		return false;
+	}
+	return false;
+}
+
+bool confirm_eosio_msig_cancel(EosReaderCTX *ctx)
+{
+	EosioMsigCancel cancel;
+	if (!reader_get_cancel(ctx, &cancel)) {
+		return false;
+	}
+	return false;
+}
+
+bool confirm_eosio_msig_approve(EosReaderCTX *ctx)
+{
+	EosioMsigApprove approve;
+	if (!reader_get_approve(ctx, &approve)) {
+		return false;
+	}
+	return false;
+}
+
+bool confirm_eosio_msig_unapprove(EosReaderCTX *ctx)
+{
+	EosioMsigUnapprove unapprove;
+	if (!reader_get_unapprove(ctx, &unapprove)) {
+		return false;
+	}
+	return false;
+}
+
+bool confirm_eosio_msig_exec(EosReaderCTX *ctx)
+{
+	EosioMsigExec exec;
+	if (!reader_get_exec(ctx, &exec)) {
+		return false;
+	}
+	return false;
 }
 
 bool confirm_action(EosReaderCTX *ctx)
@@ -790,15 +822,15 @@ bool confirm_action(EosReaderCTX *ctx)
 		switch (action.name)
 		{
 			case ACTION_PROPOSE: 
-			break;
-			case ACTION_UNAPPROVE: 
-			break;
-			case ACTION_APPROVE: 
-			break;
+				return confirm_eosio_msig_propose(ctx);
 			case ACTION_CANCEL: 
-			break;
+				return confirm_eosio_msig_cancel(ctx);
+			case ACTION_UNAPPROVE: 
+				return confirm_eosio_msig_unapprove(ctx);
+			case ACTION_APPROVE: 
+				return confirm_eosio_msig_approve(ctx);
 			case ACTION_EXEC: 
-			break;
+				return confirm_eosio_msig_exec(ctx);
 			default:
 			break;
 		}

@@ -797,9 +797,42 @@ bool confirm_eosio_msig_cancel(EosReaderCTX *ctx)
 		return false;
 	}
 
-	// char _confirm_cancel[] = "";
+	char _confirm_cancel[] = "Confirm cancel";
+	char _proposal_desc[] = "proposal:";
+	char _proposal[21];
+	char _proposer_desc[] = "proposer:";
+	char _proposer[21];
 
-	return false;
+	memset(_proposal, 0, 21);
+	memset(_proposer, 0, 21);
+
+	name_to_str(cancel.proposal_name, _proposal);
+	name_to_str(cancel.proposer, _proposer);
+
+	layoutDialogSwipe(
+		&bmp_icon_question,
+		_cancel, _confirm, NULL,
+		_confirm_cancel, _proposal_desc, _proposal, _proposer_desc, _proposer, NULL
+	);
+
+	if (!protectButton(ButtonRequestType_ButtonRequest_SignTx, false)) {
+		return false;
+	}
+
+	char _really_cancel[] = "Really cancel";
+	char _canceler_desc[] = "canceler:";
+	char _canceler[21];
+
+	memset(_canceler, 0, 21);
+	name_to_str(cancel.canceler, _canceler);
+
+	layoutDialogSwipe(
+		&bmp_icon_question,
+		_cancel, _confirm, NULL,
+		_really_cancel, _proposal_desc, _proposal, _canceler_desc, _canceler, NULL
+	);
+
+	return protectButton(ButtonRequestType_ButtonRequest_SignTx, false);
 }
 
 bool confirm_eosio_msig_approve(EosReaderCTX *ctx)
@@ -808,7 +841,43 @@ bool confirm_eosio_msig_approve(EosReaderCTX *ctx)
 	if (!reader_get_approve(ctx, &approve)) {
 		return false;
 	}
-	return false;
+
+	char _confirm_approve[] = "Confirm approve";
+	char _proposal_desc[] = "proposal:";
+	char _proposal[21];
+	char _proposer_desc[] = "proposer:";
+	char _proposer[21];
+
+	memset(_proposal, 0, 21);
+	memset(_proposer, 0, 21);
+
+	name_to_str(approve.proposal_name, _proposal);
+	name_to_str(approve.proposer, _proposer);
+
+	layoutDialogSwipe(
+		&bmp_icon_question,
+		_cancel, _confirm, NULL,
+		_confirm_approve, _proposal_desc, _proposal, _proposer_desc, _proposer, NULL
+	);
+
+	if (!protectButton(ButtonRequestType_ButtonRequest_SignTx, false)) {
+		return false;
+	}
+
+	char _really_approve[] = "Really approve";
+	char _approver_desc[] = "approver:";
+	char _approver[21];
+
+	memset(_approver, 0, 21);
+	name_to_str(approve.level.actor, _approver);
+
+	layoutDialogSwipe(
+		&bmp_icon_question,
+		_cancel, _confirm, NULL,
+		_really_approve, _proposal_desc, _proposal, _approver_desc, _approver, NULL
+	);
+
+	return protectButton(ButtonRequestType_ButtonRequest_SignTx, false);
 }
 
 bool confirm_eosio_msig_unapprove(EosReaderCTX *ctx)
@@ -817,7 +886,42 @@ bool confirm_eosio_msig_unapprove(EosReaderCTX *ctx)
 	if (!reader_get_unapprove(ctx, &unapprove)) {
 		return false;
 	}
-	return false;
+	char _confirm_unapprove[] = "Confirm unapprove";
+	char _proposal_desc[] = "proposal:";
+	char _proposal[21];
+	char _proposer_desc[] = "proposer:";
+	char _proposer[21];
+
+	memset(_proposal, 0, 21);
+	memset(_proposer, 0, 21);
+
+	name_to_str(unapprove.proposal_name, _proposal);
+	name_to_str(unapprove.proposer, _proposer);
+
+	layoutDialogSwipe(
+		&bmp_icon_question,
+		_cancel, _confirm, NULL,
+		_confirm_unapprove, _proposal_desc, _proposal, _proposer_desc, _proposer, NULL
+	);
+
+	if (!protectButton(ButtonRequestType_ButtonRequest_SignTx, false)) {
+		return false;
+	}
+
+	char _really_unapprove[] = "Really unapprove";
+	char _unapprover_desc[] = "unapprover:";
+	char _unapprover[21];
+
+	memset(_unapprover, 0, 21);
+	name_to_str(unapprove.level.actor, _unapprover);
+
+	layoutDialogSwipe(
+		&bmp_icon_question,
+		_cancel, _confirm, NULL,
+		_really_unapprove, _proposal_desc, _proposal, _unapprover_desc, _unapprover, NULL
+	);
+
+	return protectButton(ButtonRequestType_ButtonRequest_SignTx, false);
 }
 
 bool confirm_eosio_msig_exec(EosReaderCTX *ctx)
@@ -827,6 +931,43 @@ bool confirm_eosio_msig_exec(EosReaderCTX *ctx)
 		return false;
 	}
 	return false;
+
+	char _confirm_execute[] = "Confirm execute";
+	char _proposal_desc[] = "proposal:";
+	char _proposal[21];
+	char _proposer_desc[] = "proposer:";
+	char _proposer[21];
+
+	memset(_proposal, 0, 21);
+	memset(_proposer, 0, 21);
+
+	name_to_str(exec.proposal_name, _proposal);
+	name_to_str(exec.proposer, _proposer);
+
+	layoutDialogSwipe(
+		&bmp_icon_question,
+		_cancel, _confirm, NULL,
+		_confirm_execute, _proposal_desc, _proposal, _proposer_desc, _proposer, NULL
+	);
+
+	if (!protectButton(ButtonRequestType_ButtonRequest_SignTx, false)) {
+		return false;
+	}
+
+	char _really_execute[] = "Really execute";
+	char _executer_desc[] = "executer:";
+	char _executer[21];
+	
+	memset(_executer, 0, 21);
+	name_to_str(exec.executer, _executer);
+
+	layoutDialogSwipe(
+		&bmp_icon_question,
+		_cancel, _confirm, NULL,
+		_really_execute, _proposal_desc, _proposal, _executer_desc, _executer, NULL
+	);
+
+	return protectButton(ButtonRequestType_ButtonRequest_SignTx, false);
 }
 
 bool confirm_action(EosReaderCTX *ctx)

@@ -170,7 +170,7 @@ typedef struct eosio_msig_propose
     EosAccountName proposer;
     EosTypeName proposal_name;
     uint64_t requested_size;
-    EosPermissionLevel requested[4];
+    // EosPermissionLevel requested[4];
 } EosioMsigPropose;
 
 typedef struct eosio_msig_approve

@@ -156,17 +156,6 @@ int reader_get_propose(EosReaderCTX *_ctx, EosioMsigPropose *propose)
     if (!reader_get_variable_uint(_ctx, &propose->requested_size)) {
         return FAILED;
     }
-    if (propose->requested_size > 4) {
-        return FAILED;
-    }
-    for (uint8_t i = 0; i < propose->requested_size; i ++) {
-        if (!reader_get_long(_ctx, &propose->requested[i].actor)) {
-            return FAILED;
-        }
-        if (!reader_get_long(_ctx, &propose->requested[i].permission)) {
-            return FAILED;
-        }
-    }
     return SUCCESS;
 }
 

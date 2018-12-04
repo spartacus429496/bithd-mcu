@@ -14,12 +14,17 @@
 #include "eos_action_reader.h"
 #include "eos_action_data_reader.h"
 #include "eos_utils.h"
+#include "eos_transaction_reader.h"
 
 static bool eos_signing = false;
 SHA256_CTX sha256_ctx;
 static EOSTxSignature msg_tx_request;
 static uint8_t privkey[32];
 static uint32_t data_left;
+
+static char _next[] = _("Next");
+static char _confirm[] = _("Confirm");
+static char _cancel[] = _("Cancel");
 
 static inline void hash_bytes(const uint8_t *buf, const size_t size)
 {
@@ -113,9 +118,6 @@ bool confirm_eosio_newaccount(EosReaderCTX *ctx)
 	if (!reader_get_newaccount(ctx, &new_account)) {
 		return false;
 	}
-
-	char _confirm[] = _("Confirm");
-	char _cancel[] = _("Cancel");
 
 	char _confirm_create_desc[] = "Confirm creating";
 	char _account[] = "account:";
@@ -326,8 +328,6 @@ bool confirm_eosio_buyram(EosReaderCTX *ctx)
 		return false;
 	}
 
-	char _confirm[] = _("Confirm");
-	char _cancel[] = _("Cancel");
 	char _confirm_buy_desc[] = "Confirm buying";
 	char _amount[21];
 	char _for_account[] = "ram for account:";
@@ -371,8 +371,6 @@ bool confirm_eosio_buyram_bytes(EosReaderCTX *ctx)
 		return false;
 	}
 
-	char _confirm[] = _("Confirm");
-	char _cancel[] = _("Cancel");
 	char _confirm_buy_desc[] = "Confirm buying";
 	char _amount[21];
 	char _for_account[] = "ram for account:";
@@ -417,8 +415,6 @@ bool confirm_eosio_sell_ram(EosReaderCTX *ctx)
 		return false;
 	}
 
-	char _confirm[] = _("Confirm");
-	char _cancel[] = _("Cancel");
 	char _confirm_sell_desc[] = "Confirm selling";
 	char _sell_bytes[21];
 	char _seller_account_desc[] = "seller account:";
@@ -463,8 +459,6 @@ bool confirm_eosio_delegate(EosReaderCTX *ctx)
 		return false;
 	}
 
-	char _confirm[] = _("Confirm");
-	char _cancel[] = _("Cancel");
 	char _confirm_plage_desc[] = "Confirm placing";
 	char _amount1[21];
 	char _desc1[21];
@@ -558,8 +552,6 @@ bool confirm_eosio_undelegate(EosReaderCTX *ctx)
 		return false;
 	}
 
-	char _confirm[] = _("Confirm");
-	char _cancel[] = _("Cancel");
 	char _confirm_redeem_desc[] = "Confirm redeeming";
 	char _amount1[21];
 	char _desc1[21];
@@ -646,10 +638,6 @@ bool confirm_eosio_vote_producer(EosReaderCTX *ctx)
 	char _producer2[21];
 	char _producer3[21];
 
-	char _next[] = _("Next");
-	char _confirm[] = _("Confirm");
-	char _cancel[] = _("Cancel");
-
 	uint8_t page_count = 0;
 
 	while (page_count < vote_producer.producer_size) {
@@ -720,7 +708,7 @@ bool confirm_eosio_token_transfer(EosReaderCTX *ctx)
 
 	layoutDialogSwipe(
 		&bmp_icon_question,
-		_("Cancel"), _("Confrim"), NULL,
+		_cancel, _confirm, NULL,
 		_sending_desc, _send_value, _to_desc, _to, NULL, NULL
 	);
 	if (!protectButton(ButtonRequestType_ButtonRequest_SignTx, false)) {
@@ -735,7 +723,7 @@ bool confirm_eosio_token_transfer(EosReaderCTX *ctx)
 
 	layoutDialogSwipe(
 		&bmp_icon_question,
-		_("Cancel"), _("Confrim"), NULL,
+		_cancel, _confirm, NULL,
 		_really_send, _send_value, _from_desc, _from, NULL, NULL
 	);
 	return protectButton(ButtonRequestType_ButtonRequest_SignTx, false); 
@@ -747,7 +735,59 @@ bool confirm_eosio_msig_propose(EosReaderCTX *ctx)
 	if (!reader_get_propose(ctx, &propose)) {
 		return false;
 	}
-	return false;
+
+	char _confirm_creating[] = "Confirm creating";
+	char _proposal_desc[] = "proposal:";
+	char _proposal[21];
+	char _proposer_desc[] = "proposer:";
+	char _proposer[21];
+
+	memset(_proposal, 0, 21);
+	memset(_proposer, 0, 21);
+
+	name_to_str(propose.proposal_name, _proposal);
+	name_to_str(propose.proposer, _proposer);
+
+	ayoutDialogSwipe(
+		&bmp_icon_question,
+		_cancel, _confirm, NULL,
+		_confirm_creating, _proposal_desc, _proposal, _proposer_desc, _proposer, NULL
+	);
+
+	if (!protectButton(ButtonRequestType_ButtonRequest_SignTx, false)) {
+		return false;
+	}
+
+	EosPermissionLevel requested;
+	for (uint8_t i = 0; i < propose.requested_size; i ++ ) {
+		memset(&requested, 0, sizeof(EosPermissionLevel));
+		if (!reader_get_long(ctx, &requested.actor)) {
+             return FAILED;
+        }
+        if (!reader_get_long(ctx, &requested.permission)) {
+            return FAILED;
+        }
+		// show requested ?
+	} 
+
+	// show inner transaction.
+	EosTransaction inner_trx;
+	if (!transaction_reader_get(ctx, &inner_trx)) {
+		return false;
+	}
+
+	if (!confirm_action(ctx)) {
+		return false;
+	}
+
+	char _really_create[] = "Really create";
+	ayoutDialogSwipe(
+		&bmp_icon_question,
+		_cancel, _confirm, NULL,
+		_really_create, _proposal_desc, _proposal, _proposer_desc, _proposer, NULL
+	);
+	
+	return protectButton(ButtonRequestType_ButtonRequest_SignTx, false);
 }
 
 bool confirm_eosio_msig_cancel(EosReaderCTX *ctx)

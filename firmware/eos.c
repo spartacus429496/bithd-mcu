@@ -748,7 +748,7 @@ bool confirm_eosio_msig_propose(EosReaderCTX *ctx)
 	name_to_str(propose.proposal_name, _proposal);
 	name_to_str(propose.proposer, _proposer);
 
-	ayoutDialogSwipe(
+	layoutDialogSwipe(
 		&bmp_icon_question,
 		_cancel, _confirm, NULL,
 		_confirm_creating, _proposal_desc, _proposal, _proposer_desc, _proposer, NULL
@@ -781,12 +781,12 @@ bool confirm_eosio_msig_propose(EosReaderCTX *ctx)
 	}
 
 	char _really_create[] = "Really create";
-	ayoutDialogSwipe(
+	layoutDialogSwipe(
 		&bmp_icon_question,
 		_cancel, _confirm, NULL,
 		_really_create, _proposal_desc, _proposal, _proposer_desc, _proposer, NULL
 	);
-	
+
 	return protectButton(ButtonRequestType_ButtonRequest_SignTx, false);
 }
 
@@ -796,6 +796,9 @@ bool confirm_eosio_msig_cancel(EosReaderCTX *ctx)
 	if (!reader_get_cancel(ctx, &cancel)) {
 		return false;
 	}
+
+	// char _confirm_cancel[] = "";
+
 	return false;
 }
 

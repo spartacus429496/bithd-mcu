@@ -688,7 +688,7 @@ bool confirm_eosio_vote_producer(EosReaderCTX *ctx)
 	return protectButton(ButtonRequestType_ButtonRequest_SignTx, false);
 }
 
-bool confirm_eosio_token_transfer(EosReaderCTX *ctx) 
+bool confirm_token_transfer(EosReaderCTX *ctx, uint64_t account) 
 {
 	EosioTokenTransfer transfer;
 	if (!reader_get_transfer(ctx, &transfer)) {
@@ -697,8 +697,14 @@ bool confirm_eosio_token_transfer(EosReaderCTX *ctx)
 
 	char _sending_desc[] = "Confirm sending";
 	char _send_value[21];
-	char _to_desc[] = "to:";
+	char _to_desc[21];
 	char _to[21];
+
+	if (account == EOSIO_TOKEN) {
+		strcpy(_to_desc, "to:");
+	} else {
+		strcpy(_to_desc, "token to:");
+	}
 
 	memset(_send_value, 0, 21);
 	memset(_to, 0, 21);
@@ -994,14 +1000,6 @@ bool confirm_action(EosReaderCTX *ctx)
 			default:
 				break;
 		}
-	} else if (action.account == EOSIO_TOKEN) {
-		switch (action.name) 
-		{
-			case ACTION_TRANSMFER: 
-				return confirm_eosio_token_transfer(ctx);
-			default: 
-				break;
-		}
 	} else if (action.account == EOSIO_MSIG) {
 		switch (action.name)
 		{
@@ -1019,7 +1017,11 @@ bool confirm_action(EosReaderCTX *ctx)
 			break;
 		}
 	} else {
-		// other actions.
+		if (action.name == ACTION_TRANSMFER) {
+			return confirm_token_transfer(ctx, action.account);
+		} else {
+			// unsupport actions.
+		}
 	}
 	return false;
 }

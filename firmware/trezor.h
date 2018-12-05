@@ -21,7 +21,7 @@
 #define __TREZOR_H__
 
 #define VERSION_MAJOR 2
-#define VERSION_MINOR 3
+#define VERSION_MINOR 4
 #define VERSION_PATCH 0
 
 #define STR(X) #X

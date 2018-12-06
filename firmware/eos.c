@@ -743,7 +743,7 @@ bool confirm_eosio_msig_propose(EosReaderCTX *ctx)
 	}
 
 	char _confirm_creating[] = "Confirm creating";
-	char _proposal_desc[] = "proposal:";
+	char _proposal_desc[] = "proposal name:";
 	char _proposal[21];
 	char _proposer_desc[] = "proposer:";
 	char _proposer[21];
@@ -781,9 +781,11 @@ bool confirm_eosio_msig_propose(EosReaderCTX *ctx)
 	if (!transaction_reader_get(ctx, &inner_trx)) {
 		return false;
 	}
-
-	if (!confirm_action(ctx)) {
-		return false;
+	uint64_t action_count = action_reader_count(ctx);
+	for (uint8_t i=0; i < action_count; i ++) {
+		if (!confirm_action(ctx)) {
+			return false;
+		}
 	}
 
 	char _really_create[] = "Really create";
@@ -804,7 +806,7 @@ bool confirm_eosio_msig_cancel(EosReaderCTX *ctx)
 	}
 
 	char _confirm_cancel[] = "Confirm cancel";
-	char _proposal_desc[] = "proposal:";
+	char _proposal_desc[] = "proposal name:";
 	char _proposal[21];
 	char _proposer_desc[] = "proposer:";
 	char _proposer[21];
@@ -849,7 +851,7 @@ bool confirm_eosio_msig_approve(EosReaderCTX *ctx)
 	}
 
 	char _confirm_approve[] = "Confirm approve";
-	char _proposal_desc[] = "proposal:";
+	char _proposal_desc[] = "proposal name:";
 	char _proposal[21];
 	char _proposer_desc[] = "proposer:";
 	char _proposer[21];
@@ -893,7 +895,7 @@ bool confirm_eosio_msig_unapprove(EosReaderCTX *ctx)
 		return false;
 	}
 	char _confirm_unapprove[] = "Confirm unapprove";
-	char _proposal_desc[] = "proposal:";
+	char _proposal_desc[] = "proposal name:";
 	char _proposal[21];
 	char _proposer_desc[] = "proposer:";
 	char _proposer[21];
@@ -936,10 +938,9 @@ bool confirm_eosio_msig_exec(EosReaderCTX *ctx)
 	if (!reader_get_exec(ctx, &exec)) {
 		return false;
 	}
-	return false;
 
 	char _confirm_execute[] = "Confirm execute";
-	char _proposal_desc[] = "proposal:";
+	char _proposal_desc[] = "proposal name:";
 	char _proposal[21];
 	char _proposer_desc[] = "proposer:";
 	char _proposer[21];

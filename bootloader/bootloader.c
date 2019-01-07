@@ -161,7 +161,8 @@ int main(void)
 
     delay(100000);
     state = gpio_port_read(GPIOB);
- 	if ((state & GPIO5) == GPIO5)
+ 	//if ((state & GPIO5) == GPIO5)
+    if (0) //jack debug
     {
 		usart_setup();    //uart init 115200
 		if (!signatures_ok(NULL)) 
@@ -181,7 +182,8 @@ int main(void)
 	{
 		state = gpio_port_read(BitBTN_PORT);
 		oledClear();
-		oledDrawBitmap(40, 8,&bmp_logo64);
+		oledDrawString(52, 0, "BITHD");
+		//oledDrawBitmap(40, 8,&bmp_logo64);//jack debug
 		oledRefresh();
 		
 		if ((state & BitBTN_PIN_YES) == BitBTN_PIN_YES)
@@ -201,7 +203,9 @@ int main(void)
 				else
 				{
 #endif
+#if 1//jack_debug
 					load_app();
+#endif
 #if PROTECTED
 				}	
 			}

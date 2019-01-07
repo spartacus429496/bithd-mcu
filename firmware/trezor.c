@@ -47,7 +47,11 @@ int main(void)
 	setup();
 	__stack_chk_guard = random32(); // this supports compiler provided unpredictable stack protection checks
 	oledInit();
+#if 0
 	usart_setup();                  //uart init 115200
+#else
+    usart_proj_polaris_setup();
+#endif
 
 
 #if FASTFLASH
@@ -70,7 +74,21 @@ int main(void)
 
 	storage_init();
 
-	for (;;) {
+#if 1//jack_debug
+
+		oledDrawStringCenter(0, "hello BACKUP!");
+		oledRefresh();
+#endif
+    //unsigned char ack_succs[3]={0x5a,0xa5,0x00};
+    unsigned char hello_str[] = "hello, world!\n";
+    for (;;) {
+        for (uint16_t i=0;i<10;i++) {
+            //uart_send_Bty(ack_succs,3);//串口发送 成功ACK
+            uart_send_Bty(hello_str, sizeof(hello_str));
+
+        }
+        //while(1);
+        for (;;){};
 		usbPoll();
 	  bithdapp();
 	}

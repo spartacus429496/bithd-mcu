@@ -46,7 +46,7 @@ extern unsigned char needsuccessack_flag;
 #define ENDPOINT_ADDRESS_OUT        (0x01)
 
 static bool brand_new_firmware;
-
+#if 0
 static const struct usb_device_descriptor dev_descr = {
 	.bLength = USB_DT_DEVICE_SIZE,
 	.bDescriptorType = USB_DT_DEVICE,
@@ -63,6 +63,7 @@ static const struct usb_device_descriptor dev_descr = {
 	.iSerialNumber = 3,
 	.bNumConfigurations = 1,
 };
+#endif
 
 static const uint8_t hid_report_descriptor[] = {
 	0x06, 0x00, 0xff,  // USAGE_PAGE (Vendor Defined)
@@ -134,6 +135,7 @@ static const struct usb_interface_descriptor hid_iface[] = {{
 	.extralen = sizeof(hid_function),
 }};
 
+#if 0
 static const struct usb_interface ifaces[] = {{
 	.num_altsetting = 1,
 	.altsetting = hid_iface,
@@ -150,6 +152,7 @@ static const struct usb_config_descriptor config = {
 	.bMaxPower = 0x32,
 	.interface = ifaces,
 };
+#endif
 
 // static const char *usb_strings[] = {
 // 	"SatoshiLabs",

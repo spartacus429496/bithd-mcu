@@ -5,6 +5,7 @@
 extern TimProg T_Connect;                                //communicate timeout timer
 
  extern void usart_setup(void);
+void usart_proj_polaris_setup(void);
  extern void USART2_IRQHandler(void);
 
 #define TimeClose 0

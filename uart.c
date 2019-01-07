@@ -90,6 +90,12 @@ uint16_t bd_crc16(uint16_t crc, uint8_t const *buffer, uint16_t len)
 }
 
 ///////////////////////////////////////
+/*
+ * PA2 USART2_TX
+ * PA3 USART2_RX
+ * AF7
+ */
+
  void usart_setup(void)
 {
 	rcc_periph_clock_enable(RCC_USART2);
@@ -111,6 +117,41 @@ uint16_t bd_crc16(uint16_t crc, uint8_t const *buffer, uint16_t len)
 	usart_enable(USART2);
 }
 
+
+//jack_debug
+/*
+ *  STM32F205xx
+ *  STM32F207xx
+ *  Datasheet - production data
+ *
+ * ARM®-based 32-bit MCU, 150DMIPs, up to 1 MB Flash/128+4KB RAM, USB OTG HS/FS, Ethernet, 17 TIMs, 3 ADCs, 15 comm. interfaces & camera
+ *
+ * Table 10. Alternate function mapping
+ *
+ * port B
+ * PB6 USART1_TX
+ * PB7 USART1_RX
+ * AF7
+ */
+void usart_proj_polaris_setup(void)
+{
+	rcc_periph_clock_enable(RCC_USART1);
+	gpio_mode_setup(GPIOB, GPIO_MODE_AF, GPIO_PUPD_NONE, GPIO6 | GPIO7);
+	gpio_set_af(GPIOB, GPIO_AF7, GPIO6 | GPIO7);
+	usart_set_baudrate(USART1, 9600);
+	usart_set_databits(USART1, 8);
+	usart_set_stopbits(USART1, USART_STOPBITS_1);
+	usart_set_parity(USART1, USART_PARITY_NONE);
+	usart_set_flow_control(USART1, USART_FLOWCONTROL_NONE);//USART_FLOWCONTROL_RTS_CTS);//USART_FLOWCONTROL_NONE);//
+	usart_set_mode(USART1, USART_MODE_TX_RX);
+	nvic_enable_irq(38);                                     //enable sum interrupt
+    usart_enable_rx_interrupt(USART1);                       //enable usart2 interrupt
+	usart_enable(USART1);
+
+}
+
+
+
  ///////////////////////////////////////////////////////////////////////////////////////////////
 
 /*****************************************
@@ -122,7 +163,11 @@ void uart_send_Bty(unsigned char* buf,unsigned short len)
 	unsigned short i;
 	for (i = 0; i < len; i++)
 	{
+#if 0//jack the polaris
 		usart_send_blocking(USART2, buf[i]);
+#else
+		usart_send_blocking(USART1, buf[i]);
+#endif
 	}
 }
 

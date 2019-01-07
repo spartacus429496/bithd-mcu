@@ -29,3 +29,70 @@ This creates file `build/bootloader-TAG.bin` and prints its fingerprint and size
 3. Compute fingerprint: `tail -c +257 trezor.signed.bin | sha256sum`
 
 Step 3 should produce the same sha256 fingerprint like your local build (for the same version tag). Firmware has a special header (of length 256 bytes) holding signatures themselves, which must be avoided while calculating the fingerprint, that's why tail command has to be used.
+
+git clone https://github.com/trezor/trezor-mcu.git
+cd trezor-mcu/
+git submodule update --init --recursive
+make -C vendor/libopencm3/ lib/stm32/f2
+export MEMORY_PROTECT=0
+make
+make -C bootloader/ align
+make -C vendor/nanopb/generator/proto/
+make -C firmware/protob/
+make -C firmware/ sign
+cp bootloader/bootloader.bin bootloader/combine/bl.bin
+cp firmware/trezor.bin bootloader/combine/fw.bin
+cd bootloader/combine/ && ./prepare.py
+
+
+cs find e main
+cs find e take the risk
+cs find e APPVER
+cs add ./cscope.out
+cs
+cs find g usbPoll
+cs f g usbd_ep_write_packet
+Tlist
+cs f e ep_write_packet
+cs f e msg_out_data
+cs f f message
+wa
+waa
+wqa
+cs show
+cs add cscope.out
+cs find f main
+tab co
+o
+set hlsearch
+!make -C vendor/libopencm3/ lib/stm32/f2
+!export MEMORY_PROTECT=0
+!make
+!make -C bootloader/ align
+!make -C vendor/nanopb/generator/proto/
+!make -C firmware/protob/
+! make -C firmware/ sign
+t
+cs find main
+we
+!ls ../
+cs find g main
+tab cw
+wq
+vs
+W
+cs find f uart
+TagbarOpen
+cw
+tab copen
+q
+!git log -L 112,117: uart.c
+!git log -L 112,117:uart.c
+!git log -L 90,117:uart.c
+cs 
+tabnew %
+cs f f uart
+only
+w
+qa
+

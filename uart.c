@@ -144,7 +144,7 @@ void usart_proj_polaris_setup(void)
 	usart_set_parity(USART1, USART_PARITY_NONE);
 	usart_set_flow_control(USART1, USART_FLOWCONTROL_NONE);//USART_FLOWCONTROL_RTS_CTS);//USART_FLOWCONTROL_NONE);//
 	usart_set_mode(USART1, USART_MODE_TX_RX);
-	nvic_enable_irq(38);                                     //enable sum interrupt
+	nvic_enable_irq(NVIC_USART1_IRQ);                                     //enable sum interrupt
     usart_enable_rx_interrupt(USART1);                       //enable usart2 interrupt
 	usart_enable(USART1);
 
@@ -171,7 +171,42 @@ void uart_send_Bty(unsigned char* buf,unsigned short len)
 	}
 }
 
+unsigned char uart_recv_buf_data[40] = {0};
+unsigned int  uart_recv_buf_len = 0;
+unsigned int  uart_recv_buf_index = 0;
+unsigned char uart_recv_flag = 0;
+void uart_recv_reset(void)
+{
+uart_recv_buf_len = 0;
+uart_recv_buf_index = 0;
+uart_recv_flag = 0;
 
+
+}
+
+void usart1_isr(void)
+{                                                                           //judge whether or not recive the uart data
+    unsigned char tmp_char=0;
+    if(usart_get_interrupt_source(USART1,USART_SR_RXNE)) {
+        tmp_char = usart_recv_blocking(USART1);                     //read uart data
+        if (uart_recv_flag == 0) {
+            uart_recv_buf_data[uart_recv_buf_index] = tmp_char;
+            uart_recv_buf_index++;
+            //if (tmp_char == '\n') {
+            if (tmp_char == ';') {
+                //if (uart_recv_buf_index == 2) {//only \r\n
+                if (0){
+                    uart_recv_reset();
+                } else {
+                uart_recv_buf_data[uart_recv_buf_index] = 0;
+                uart_recv_buf_index++;
+                uart_recv_flag = 1;
+                }
+            }
+        } else {
+        }
+    }
+}
 
 /*****************************************
 函数名称：串口接收中断函数

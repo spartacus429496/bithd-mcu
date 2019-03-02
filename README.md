@@ -96,3 +96,18 @@ only
 w
 qa
 
+git clone https://github.com/trezor/trezor-mcu.git
+cd trezor-mcu/
+git submodule update --init --recursive
+make -C vendor/libopencm3/ lib/stm32/f2
+export MEMORY_PROTECT=0
+make
+make -C bootloader/ align
+make -C vendor/nanopb/generator/proto/
+make -C firmware/protob/
+make -C firmware/ sign
+cp bootloader/bootloader.bin bootloader/combine/bl.bin
+cp firmware/trezor.bin bootloader/combine/fw.bin
+cd bootloader/combine/ && ./prepare.py
+
+

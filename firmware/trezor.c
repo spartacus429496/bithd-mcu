@@ -76,19 +76,128 @@ int main(void)
 
 #if 1//jack_debug
 
-		oledDrawStringCenter(0, "hello BACKUP!");
+		oledDrawStringCenter(0, "waiting!");
 		oledRefresh();
+         //           oledClear();
+          //          oledRefresh();
 #endif
     //unsigned char ack_succs[3]={0x5a,0xa5,0x00};
-    unsigned char hello_str[] = "hello, world!\n";
+    unsigned char hello_str[] = "from trezor!\n";
     for (;;) {
-        for (uint16_t i=0;i<10;i++) {
+#if 0
+        //for (uint16_t i=0;i<10000;i++) {
+        for (;;) {
             //uart_send_Bty(ack_succs,3);//串口发送 成功ACK
             uart_send_Bty(hello_str, sizeof(hello_str));
+            delay(100000);
 
         }
+#endif
         //while(1);
-        for (;;){};
+        static unsigned char flag = 0;
+        static unsigned char recved_cnt= 0;
+        for (;;){
+#if 0
+            if (flag == 0) {
+                do {
+                    delay(100000);
+                    buttonUpdate();
+                } while (!button.YesUp && !button.NoUp);
+
+                if (button.NoUp) {
+                    //show_halt(); // no button was pressed -> halt
+                    oledClear();
+                    oledRefresh();
+                    uart_send_Bty(hello_str, sizeof(hello_str));
+                    oledDrawStringCenter(4, "sending hello!!");
+                    oledRefresh();
+                    flag = 1;
+                }else if (button.YesUp) {
+                    //show_halt(); // no button was pressed -> halt
+                    oledClear();
+                    oledRefresh();
+                    //uart_send_Bty(hello_str, sizeof(hello_str));
+                    oledDrawStringCenter(1, (const char *)hello_str);
+                    oledRefresh();
+                }
+            }
+#endif
+
+
+
+
+#if 0
+
+            if (!button.YesDown) {
+                //uart_send_Bty(hello_str, sizeof(hello_str));
+                oledDrawStringCenter(1, (const char *)hello_str);
+                oledRefresh();
+            }
+
+            if (button.NoDown) {
+		        oledClear();
+                oledRefresh();
+                //uart_send_Bty(hello_str, sizeof(hello_str));
+                oledDrawStringCenter(2, "cleared ");
+                oledRefresh();
+            }
+#endif
+
+
+            if (uart_recv_flag == 1) {
+                //oledClear();
+                //oledRefresh();
+                if (recved_cnt ==0) {
+                    //oledDrawStringCenter(1, "first received:");
+                    oledDrawString(0, 0, "first received:");
+                    recved_cnt ++;
+                    oledRefresh();
+                    oledDrawString(0, 10, (const char *)uart_recv_buf_data);
+                    oledRefresh();
+                    uart_recv_flag = 0;
+                    uart_recv_reset();
+                    delay(100000);
+                    //uart_send_Bty(hello_str, sizeof(hello_str));
+
+
+                } else if (recved_cnt ==1) {
+                    oledDrawString(0, 20, "2ed received:");
+                    recved_cnt ++;
+                    oledRefresh();
+                    oledDrawString(0, 30, (const char *)uart_recv_buf_data);
+                    oledRefresh();
+                    uart_recv_flag = 0;
+                    uart_recv_reset();
+                    delay(100000);
+                    uart_send_Bty(hello_str, sizeof(hello_str));
+
+                }else if (recved_cnt ==2) {
+                    oledDrawString(0, 37, "3ed :");
+                    recved_cnt ++;
+                    oledRefresh();
+                    oledDrawString(0, 45, (const char *)(uart_recv_buf_data+5));
+                    oledRefresh();
+                    uart_recv_flag = 0;
+                    uart_recv_reset();
+                    delay(100000);
+                    //uart_send_Bty(hello_str, sizeof(hello_str));
+
+                } else {
+		            oledClear();
+                    oledRefresh();
+                    oledDrawString(0, 30, (const char *)uart_recv_buf_data);
+                    oledRefresh();
+
+                    uart_recv_flag = 0;
+                    uart_recv_reset();
+                    delay(100000);
+
+                }
+
+
+                 }
+                    delay(100000);
+        }
 		usbPoll();
 	  bithdapp();
 	}

@@ -26,6 +26,7 @@ unsigned char stm32workstatus=0; //stm32 work status remeber
 
 unsigned char sendsuccessflag=0;
 
+#if 0
 
 /** CRC table for the CRC-16. The poly is 0x8005 (x^16 + x^15 + x^2 + 1) */
 uint16_t const crc16_table[256] =
@@ -69,6 +70,8 @@ static inline uint16_t crc16_byte(uint16_t crc, const uint8_t data)
 {
     return (crc >> 8) ^ crc16_table[(crc ^ data) & 0xff];
 }
+#endif
+#if 0
 /**
  * crc16 - compute the CRC-16 for the data buffer
  * @crc: previous CRC value
@@ -83,6 +86,7 @@ uint16_t bd_crc16(uint16_t crc, uint8_t const *buffer, uint16_t len)
         crc = crc16_byte(crc, *buffer++);
     return crc;
 }
+#endif
 
 /*
  * PA2 USART2_TX
@@ -269,6 +273,7 @@ void uart_send(void)
 	uart_communicate_buf.data=Data_64Bytes;
 }
 
+#if 0
 /******************************
 函数名称：crc校验
 出参: 0 校验成功 ， 1 校验失败
@@ -289,7 +294,9 @@ unsigned char CRC16_check(void)
   	else{}
   	return 1;
 }
+#endif
 
+#if 0
 unsigned short CRC16_Uart_send(void)
 {
   	unsigned short crc16=0;
@@ -305,7 +312,10 @@ unsigned short CRC16_Uart_send(void)
 
 	return crc16;
 }
+#endif
 
+
+#if 0
 /*************************
 函数名称:指令发送
 入参：
@@ -322,6 +332,7 @@ void CmdSendUart(unsigned char Cmd_uart,unsigned char* apdubuf,unsigned short ap
 	uart_send_flag=1;                                                            //串口发送标志置位，串口发送数据
 	needsuccessack_flag=1;                                                       //No need to send Success
 }
+#endif
 extern void Datas_rx_callback(unsigned char *buf,unsigned short length);
 /************************************
 函数名称：数据指令处理
@@ -351,6 +362,11 @@ void SuccessAck(void)
 函数名称：数据发送接收函数
 **************************************/
 void UartDataSendrecive(void)
+#if 1
+{
+
+}
+#else
 {
 	unsigned char ack_erro[3]={0x5a,0xa5,0x01};
 	unsigned char ack_succs[3]={0x5a,0xa5,0x00};
@@ -451,6 +467,7 @@ void UartDataSendrecive(void)
 		}
 	}
 }
+#endif
 
 
 

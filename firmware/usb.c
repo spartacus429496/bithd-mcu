@@ -431,8 +431,35 @@ extern volatile unsigned char wangflag;
 extern unsigned char sendsuccessflag;
 extern unsigned char uart_send_flag;                    //串口数据发送标志位 0 无数据发送，1 有数据发送
 extern unsigned char Data_64Bytes[66];
-void CmdSendUart(unsigned char cmd_uart,unsigned char* apdubuf,unsigned short apdulength);
+//void CmdSendUart(unsigned char cmd_uart,unsigned char* apdubuf,unsigned short apdulength);
 void uartpoll(void)
+#if 1
+{
+    static const uint8_t *data;
+    // poll read buffer
+    // write pending data
+    data = msg_out_data();
+    if (data) {
+        //while ( usbd_ep_write_packet(usbd_dev, ENDPOINT_ADDRESS_IN, data, 64) != 64 ) {}
+        //
+        //unsigned char array_uart_out[64] = "upate key message\r\n";
+        unsigned char array_uart_out[65] = "1234567890123456789012345678901234567890123456789012345678901234";
+        memcpy(array_uart_out, data, 64);
+        unsigned char *p_in = array_uart_out;
+
+        uart_recv_reset();
+        //unsigned short len = strlen(array_uart_out);
+        //hbto_uart_send(p_in, len);
+        hbto_uart_send(p_in, 64);
+#if 0
+        delay(100000);
+#endif
+        uart_recv_reset();
+
+
+    }
+}
+#else
 {
 	static uint8_t *data;
 
@@ -472,6 +499,7 @@ void uartpoll(void)
 	   sendsuccessflag=0;
 	  }
 }
+#endif
 
 
 

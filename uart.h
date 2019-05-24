@@ -62,10 +62,10 @@ void usart_proj_polaris_setup(void);
 
  void uart_send_Bty(unsigned char* buf,unsigned short len);
  void UartDataSendrecive(void);
- void CmdSendUart(unsigned char cmd_uart,unsigned char* apdubuf,unsigned short apdulength);
+ //void CmdSendUart(unsigned char cmd_uart,unsigned char* apdubuf,unsigned short apdulength);
 bool usart_get_interrupt_source(uint32_t usart, uint32_t flag);
 
-extern unsigned char uart_recv_buf_data[40] ;
+extern unsigned char uart_recv_buf_data[] ;
 extern unsigned int  uart_recv_buf_len ;
 extern unsigned int  uart_recv_buf_index;
 extern unsigned char uart_recv_flag;

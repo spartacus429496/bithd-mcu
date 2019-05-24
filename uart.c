@@ -12,6 +12,7 @@
 #include "./firmware/usb.h"
 #include <libopencm3/cm3/nvic.h>
 #include "./firmware/bithdapp.h"
+#include "./firmware/hbto_uart.h"
 
 
 unsigned char cmd_uart[5];                         //命令存储缓冲区
@@ -171,17 +172,18 @@ void uart_send_Bty(unsigned char* buf,unsigned short len)
 	}
 }
 
-unsigned char uart_recv_buf_data[40] = {0};
+unsigned char uart_recv_buf_data[64] = {0};
 unsigned int  uart_recv_buf_len = 0;
 unsigned int  uart_recv_buf_index = 0;
 unsigned char uart_recv_flag = 0;
 void uart_recv_reset(void)
 {
-uart_recv_buf_len = 0;
-uart_recv_buf_index = 0;
-uart_recv_flag = 0;
-
-
+    uart_recv_buf_len = 0;
+    uart_recv_buf_index = 0;
+    uart_recv_flag = 0;
+    hbto_uart_state_t *p_state = &hbto_uart_rxer.state;
+    *p_state = HBTO_IDLE;
+    memset(uart_recv_buf_data, 0, 64);
 }
 
 void usart1_isr(void)
@@ -189,24 +191,30 @@ void usart1_isr(void)
     unsigned char tmp_char=0;
     if(usart_get_interrupt_source(USART1,USART_SR_RXNE)) {
         tmp_char = usart_recv_blocking(USART1);                     //read uart data
+
+      uart_recv_buf_len = hbto_uart_recv(&tmp_char, 0, uart_recv_buf_data);
+
+#if 0
         if (uart_recv_flag == 0) {
             uart_recv_buf_data[uart_recv_buf_index] = tmp_char;
             uart_recv_buf_index++;
-            //if (tmp_char == '\n') {
+            //if (tmp_char == '\n')
             if (tmp_char == ';') {
                 //if (uart_recv_buf_index == 2) {//only \r\n
                 if (0){
                     uart_recv_reset();
                 } else {
-                uart_recv_buf_data[uart_recv_buf_index] = 0;
-                uart_recv_buf_index++;
-                uart_recv_flag = 1;
+                    uart_recv_buf_data[uart_recv_buf_index] = 0;
+                    uart_recv_buf_index++;
+                    uart_recv_flag = 1;
                 }
             }
-        } else {
+            } else {
+            }
+#endif
         }
+        USART_SR(USART1) = 0;
     }
-}
 
 /*****************************************
 函数名称：串口接收中断函数
@@ -410,6 +418,7 @@ void SaveTimData(unsigned char* buf)
   Timerdisplaybuf.bat_vol=buf[8];
 }
 
+#if 0
 /*************************
 函数名称:指令发送
 入参：
@@ -430,6 +439,7 @@ void CmdSendUart(unsigned char Cmd_uart,unsigned char* apdubuf,unsigned short ap
 		 uart_send_flag=1;//串口发送标志置位，串口发送数据
 			needsuccessack_flag=1;//No need to send Success
 }
+#endif
 //void _rx_callback(unsigned char* buf);
 //void ManyBlock64bytes_callback(unsigned char* buf,unsigned short length);
 /************************************
@@ -477,7 +487,14 @@ extern uint32_t msg_out_end;
 /*************************************
 函数名称：数据发送接收函数
 **************************************/
+
+extern void UartDataRecvCallback(void);
 void UartDataSendrecive(void)
+#if 1
+{
+    UartDataRecvCallback();
+}
+#else
 {
 	unsigned char ack_erro[3]={0x5a,0xa5,0x01};
 	unsigned char ack_succs[3]={0x5a,0xa5,0x00};
@@ -575,6 +592,7 @@ void UartDataSendrecive(void)
 	}
 
 }
+#endif
 
 
 #define USART_ISR_IDLE			(1 << 4)
